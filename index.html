@@ -154,6 +154,17 @@
   .empty-msg{text-align:center;color:#b39b6e;font-family:'Barlow Condensed',sans-serif;
     font-weight:600;text-transform:uppercase;letter-spacing:.1em;padding:24px;font-size:15px}
 
+  /* GESTÃO DE DUPLAS */
+  .dupla-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .dupla-idx{flex:none;width:26px;height:26px;border-radius:50%;background:var(--teal);color:#fff;
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;display:grid;place-items:center}
+  .dupla-input{flex:1;height:38px;padding:0 10px;font-family:'Barlow',sans-serif;font-size:14px;
+    font-weight:500;border:2px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink)}
+  .dupla-input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,94,26,.22)}
+  .dupla-del{flex:none;width:34px;height:34px;border:2px solid var(--lose);background:#fbe2cf;color:var(--lose);
+    border-radius:6px;font-weight:700;cursor:pointer;font-size:14px;line-height:1}
+  .dupla-del:hover{background:var(--lose);color:#fff}
+
   /* MODAL */
   .modal-backdrop{position:fixed;inset:0;background:rgba(26,18,8,.55);z-index:80;
     display:none;align-items:center;justify-content:center;padding:20px}
@@ -189,6 +200,7 @@
     <button class="tab" data-view="queue">⏭️ Fila</button>
     <button class="tab" data-view="results">✅ Resultados</button>
     <button class="tab" data-view="stand">🏆 Situação</button>
+    <button class="tab" data-view="draw">🎲 Sorteio</button>
   </div>
 
   <!-- CONTROL -->
@@ -221,6 +233,31 @@
     <div class="standcols" id="standCols"></div>
   </section>
 
+  <!-- SORTEIO -->
+  <section class="view" id="draw">
+    <div class="panel-title"><span class="dot"></span>Duplas & Sorteio</div>
+    <p class="panel-note">Adicione, edite ou exclua duplas (mínimo 3). A chave e os byes se ajustam sozinhos ao número de duplas. Depois clique em sortear pra embaralhar.</p>
+
+    <div class="standbox" style="margin-bottom:18px">
+      <h4 class="h-wb" style="background:var(--teal)">Lista de duplas</h4>
+      <div id="duplasMgr" style="margin:10px 0"></div>
+      <div class="dupla-row" style="margin-top:12px">
+        <span class="dupla-idx" style="background:var(--orange)">+</span>
+        <input class="dupla-input" id="newDupla" placeholder="Nome da nova dupla (ex: Fulano e Ciclano)">
+        <button class="btn" id="addDuplaBtn" style="width:auto;padding:8px 16px;background:var(--teal);color:#fff;border-color:var(--teal-deep);box-shadow:2px 2px 0 var(--teal-deep)">Adicionar</button>
+      </div>
+      <p id="drawInfo" style="font-size:13px;color:#6b5530;font-weight:600;margin-top:14px"></p>
+    </div>
+
+    <div style="text-align:center;margin:10px 0 22px">
+      <button class="btn" id="drawBtn" style="width:auto;background:var(--orange);color:#fff;border-color:var(--orange-deep);box-shadow:3px 3px 0 var(--orange-deep);font-size:17px;padding:13px 30px">🎲 Sortear duplas agora</button>
+    </div>
+    <div class="seedbar" style="background:var(--paper);border:2.5px solid var(--ink);border-radius:8px;box-shadow:5px 5px 0 var(--ink);padding:16px 18px">
+      <h3 style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:15px;color:var(--orange-deep);margin-bottom:12px">Seeds atuais</h3>
+      <div id="drawSeeds" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px"></div>
+    </div>
+  </section>
+
   <div class="toolbar">
     <button class="btn btn-ghost" id="resetBtn">↺ Zerar torneio</button>
   </div>
@@ -241,15 +278,18 @@
 
 <script>
 /* ============================================================
-   DADOS BASE — duplas por seed (sorteio já feito)
+   DUPLAS — lista editável; a chave é gerada a partir dela
    ============================================================ */
-const TEAMS = {
-  1:"Ricks e Alex Dias", 2:"Markim e Arthur", 3:"Saulo e Hiltinho",
-  4:"Joãozinho e Bruno Leonardo", 5:"João Neto e Caio", 6:"Pedrão e Léo Gomes",
-  7:"Túlio e Roosevelt Jr", 8:"Renato e Paulista", 9:"Japa e Alan Calixto",
-  10:"Rodrigão e Thiago Rômulo", 11:"Marcel e Pedro Renato", 12:"Bifinho e Gabriel",
-  13:"Neto Caixeta e Pinheiro", 14:"Dieguim e Jesser"
-};
+const DEFAULT_DUPLAS = [
+  "Túlio e Roosevelt Jr","Saulo e Hiltinho","Joãozinho e Bruno Leonardo",
+  "João Neto e Caio","Renato e Paulista","Rodrigão e Thiago Rômulo",
+  "Marcel e Pedro Renato","Dieguim e Jesser","Neto Caixeta e Pinheiro",
+  "Markim e Arthur","Japa e Alan Calixto","Ricks e Alex Dias",
+  "Pedrão e Léo Gomes","Bifinho e Gabriel"
+];
+
+/* TEAMS = mapa seed(1..N) -> nome. Reconstruído a partir de state.seeds (ordem sorteada). */
+let TEAMS = {};
 
 /* Referência a um competidor: seed direto, ou vencedor/perdedor de uma partida */
 const seed = n => ({type:'seed', n});
@@ -257,61 +297,93 @@ const win  = id => ({type:'win', id});
 const lose = id => ({type:'lose', id});
 
 /* ============================================================
-   ESTRUTURA DAS PARTIDAS
-   order = sequência sugerida; phase = rótulo; bracket = WB/LB/GF
+   GERADOR DE CHAVE DE DUPLA ELIMINATÓRIA (qualquer N >= 3)
+   byes = nextPow2(N) - N  →  vão pros primeiros seeds
    ============================================================ */
-const MATCH_DEFS = [
-  // Winners R1
-  {id:'W1', order:1, phase:'Vencedores · 1ª Rodada', bracket:'WB', a:seed(3),  b:seed(14)},
-  {id:'W2', order:2, phase:'Vencedores · 1ª Rodada', bracket:'WB', a:seed(4),  b:seed(13)},
-  {id:'W3', order:3, phase:'Vencedores · 1ª Rodada', bracket:'WB', a:seed(5),  b:seed(12)},
-  {id:'W4', order:4, phase:'Vencedores · 1ª Rodada', bracket:'WB', a:seed(6),  b:seed(11)},
-  {id:'W5', order:5, phase:'Vencedores · 1ª Rodada', bracket:'WB', a:seed(7),  b:seed(10)},
-  {id:'W6', order:6, phase:'Vencedores · 1ª Rodada', bracket:'WB', a:seed(8),  b:seed(9)},
-  // Winners R2
-  {id:'W7', order:7, phase:'Vencedores · 2ª Rodada', bracket:'WB', a:seed(1),  b:win('W6')},
-  {id:'W8', order:8, phase:'Vencedores · 2ª Rodada', bracket:'WB', a:win('W1'),b:win('W5')},
-  {id:'W9', order:9, phase:'Vencedores · 2ª Rodada', bracket:'WB', a:seed(2),  b:win('W4')},
-  {id:'W10',order:10,phase:'Vencedores · 2ª Rodada', bracket:'WB', a:win('W2'),b:win('W3')},
-  // Losers R1
-  {id:'L1', order:11,phase:'Repescagem · Repesca 1', bracket:'LB', a:lose('W1'),b:lose('W6')},
-  {id:'L2', order:12,phase:'Repescagem · Repesca 1', bracket:'LB', a:lose('W2'),b:lose('W5')},
-  {id:'L3', order:13,phase:'Repescagem · Repesca 1', bracket:'LB', a:lose('W3'),b:lose('W4')},
-  // Winners semis
-  {id:'W11',order:14,phase:'Vencedores · Semifinal', bracket:'WB', a:win('W7'),b:win('W8')},
-  {id:'W12',order:15,phase:'Vencedores · Semifinal', bracket:'WB', a:win('W9'),b:win('W10')},
-  // Losers R2
-  {id:'L4', order:16,phase:'Repescagem · Repesca 2', bracket:'LB', a:win('L1'),b:lose('W10')},
-  {id:'L5', order:17,phase:'Repescagem · Repesca 2', bracket:'LB', a:win('L2'),b:lose('W9')},
-  {id:'L6', order:18,phase:'Repescagem · Repesca 2', bracket:'LB', a:win('L3'),b:lose('W8')},
-  // Losers R3
-  {id:'L7', order:19,phase:'Repescagem · Repesca 3', bracket:'LB', a:win('L4'),b:lose('W7')},
-  {id:'L8', order:20,phase:'Repescagem · Repesca 3', bracket:'LB', a:win('L5'),b:win('L6')},
-  // Winners final
-  {id:'W13',order:21,phase:'Vencedores · Final', bracket:'WB', a:win('W11'),b:win('W12')},
-  // Losers R4
-  {id:'L9', order:22,phase:'Repescagem · Repesca 4', bracket:'LB', a:win('L7'),b:lose('W12')},
-  {id:'L10',order:23,phase:'Repescagem · Repesca 4', bracket:'LB', a:win('L8'),b:lose('W11')},
-  // Losers semi
-  {id:'L11',order:24,phase:'Repescagem · Semifinal', bracket:'LB', a:win('L9'),b:win('L10')},
-  // Losers final
-  {id:'L12',order:25,phase:'Repescagem · Final', bracket:'LB', a:win('L11'),b:lose('W13')},
-  // Grand final
-  {id:'GF', order:26,phase:'GRANDE FINAL', bracket:'GF', a:win('W13'),b:win('L12')},
-  // Reset final (conditional)
-  {id:'GF2',order:27,phase:'FINAL RESET (só se a repescagem vencer a GF)', bracket:'GF', a:win('W13'),b:win('L12'), conditional:true}
-];
+function nextPow2(n){ let p=1; while(p<n) p*=2; return p; }
+function seedOrderArr(size){
+  let r=[1,2];
+  while(r.length<size){ const n=r.length*2, nx=[]; for(const s of r){ nx.push(s); nx.push(n+1-s);} r=nx; }
+  return r;
+}
+function buildBracket(N){
+  const size=nextPow2(N), byes=size-N;
+  const matches=[]; let order=0;
+  const add=m=>{ m.order=++order; matches.push(m); return m.id; };
+  // WINNERS
+  const pos=seedOrderArr(size);
+  const r1pairs=[]; for(let i=0;i<size;i+=2) r1pairs.push([pos[i],pos[i+1]]);
+  let wbCount=0; const wbRounds=[]; let slots=[]; const r1ids=[];
+  for(const [s1,s2] of r1pairs){
+    const e1=s1<=N, e2=s2<=N;
+    if(e1&&e2){ const id='W'+(++wbCount);
+      add({id,bracket:'WB',phase:'Vencedores · Rodada 1',a:seed(s1),b:seed(s2)});
+      r1ids.push(id); slots.push(win(id));
+    } else if(e1){ slots.push(seed(s1)); } else if(e2){ slots.push(seed(s2)); }
+  }
+  wbRounds.push(r1ids);
+  let cur=slots, rnum=2, lastWbId=null;
+  const rname=rem=>rem===2?'Final (Vencedores)':rem===4?'Semifinal (Vencedores)':rem===8?'Quartas (Vencedores)':rem===16?'Oitavas (Vencedores)':'Vencedores · Rodada '+rnum;
+  while(cur.length>1){
+    const ids=[], nx=[];
+    for(let i=0;i<cur.length;i+=2){ const id='W'+(++wbCount);
+      add({id,bracket:'WB',phase:rname(cur.length),a:cur[i],b:cur[i+1]});
+      ids.push(id); nx.push(win(id)); lastWbId=id; }
+    wbRounds.push(ids); cur=nx; rnum++;
+  }
+  const wbChampRef = win(lastWbId);
+  const wbLosers = wbRounds.map(ids=>ids.map(id=>lose(id)));
+  // LOSERS
+  let lbCount=0;
+  const pair=(list,phase)=>{ const out=[];
+    for(let i=0;i<list.length;i+=2){
+      if(i+1<list.length){ const id='L'+(++lbCount);
+        add({id,bracket:'LB',phase,a:list[i],b:list[i+1]}); out.push(win(id)); }
+      else out.push(list[i]); }
+    return out; };
+  let stage=1;
+  let alive=pair(wbLosers[0]||[], 'Repescagem · Rodada '+stage); stage++;
+  for(let wr=1; wr<wbLosers.length; wr++){
+    const desc=wbLosers[wr]; if(!desc.length) continue;
+    const merged=[]; const m=Math.max(desc.length,alive.length);
+    for(let i=0;i<m;i++){ if(i<desc.length)merged.push(desc[i]); if(i<alive.length)merged.push(alive[i]); }
+    alive=pair(merged,'Repescagem · Rodada '+stage); stage++;
+    if(alive.length>1 && wr<wbLosers.length-1){ alive=pair(alive,'Repescagem · Rodada '+stage); stage++; }
+  }
+  while(alive.length>1){ alive=pair(alive,'Repescagem · Rodada '+stage); stage++; }
+  const lbChampRef=alive[0];
+  // GRAND FINAL
+  add({id:'GF',bracket:'GF',phase:'GRANDE FINAL',a:wbChampRef,b:lbChampRef});
+  add({id:'GF2',bracket:'GF',phase:'FINAL RESET (só se a repescagem vencer)',a:wbChampRef,b:lbChampRef,conditional:true});
+  return {matches,size,byes,N};
+}
 
-const MATCH_BY_ID = Object.fromEntries(MATCH_DEFS.map(m=>[m.id,m]));
+let MATCH_DEFS=[], MATCH_BY_ID={}, BRACKET_INFO={size:0,byes:0,N:0};
+function rebuildBracket(){
+  const N=Object.keys(TEAMS).length;
+  if(N<3){ MATCH_DEFS=[]; MATCH_BY_ID={}; BRACKET_INFO={size:0,byes:0,N}; return; }
+  const g=buildBracket(N);
+  MATCH_DEFS=g.matches;
+  MATCH_BY_ID=Object.fromEntries(MATCH_DEFS.map(m=>[m.id,m]));
+  BRACKET_INFO={size:g.size,byes:g.byes,N};
+}
+
 const NUM_COURTS = 3;
-const STORE_KEY = 'futevolei_torneio_v1';
+const STORE_KEY = 'futevolei_torneio_v2';
 
 /* ============================================================
    ESTADO
    results: { matchId: {aScore, bScore, winnerSide:'a'|'b'} }
    courts: [ matchId|null, matchId|null, matchId|null ]
    ============================================================ */
-let state = { results:{}, courts:[null,null,null], gf2needed:false };
+let state = { results:{}, courts:[null,null,null], gf2needed:false, duplas:null, seeds:null };
+
+/* monta TEAMS (seed->nome) a partir de state.seeds (ordem dos seeds) */
+function applySeeds(){
+  TEAMS={};
+  (state.seeds||[]).forEach((nome,i)=>{ TEAMS[i+1]=nome; });
+  rebuildBracket();
+}
 
 function load(){
   try{
@@ -319,6 +391,15 @@ function load(){
     if(raw){ const p=JSON.parse(raw); state = Object.assign(state,p);
       if(!Array.isArray(state.courts)||state.courts.length!==NUM_COURTS) state.courts=[null,null,null]; }
   }catch(e){ console.warn('load fail',e); }
+  // lista de duplas: usa a salva, ou o default
+  if(!Array.isArray(state.duplas) || !state.duplas.length){
+    state.duplas = DEFAULT_DUPLAS.slice();
+  }
+  // ordem de seeds: usa a salva (sorteio anterior), ou inicia com a ordem das duplas
+  if(!Array.isArray(state.seeds) || !state.seeds.length){
+    state.seeds = state.duplas.slice();
+  }
+  applySeeds();
 }
 function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
 
@@ -441,6 +522,105 @@ function anyDependentPlayed(matchId){
 }
 
 /* ============================================================
+   SORTEIO + GESTÃO DE DUPLAS
+   ============================================================ */
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+function resetTorneioState(){
+  state.results = {};
+  state.courts = [null,null,null];
+  state.gf2needed = false;
+}
+function doDraw(){
+  if(state.duplas.length<3){ toast('Precisa de pelo menos 3 duplas.'); return; }
+  state.seeds = shuffle(state.duplas);
+  applySeeds();
+  resetTorneioState();
+  save(); render();
+  toast('🎲 Duplas sorteadas! Chave remontada.');
+}
+
+/* adicionar / editar / excluir duplas */
+function addDupla(nome){
+  nome=(nome||'').trim();
+  if(!nome){ toast('Digite o nome da dupla.'); return false; }
+  state.duplas.push(nome);
+  // mantém seeds em sincronia com duplas (sem sortear ainda)
+  state.seeds = state.duplas.slice();
+  resetTorneioState();
+  applySeeds(); save(); render();
+  toast('➕ Dupla adicionada.');
+  return true;
+}
+function editDupla(idx, nome){
+  nome=(nome||'').trim(); if(!nome){ toast('Nome vazio.'); return; }
+  state.duplas[idx]=nome;
+  state.seeds = state.duplas.slice();
+  resetTorneioState();
+  applySeeds(); save(); render();
+  toast('✏️ Dupla editada.');
+}
+function removeDupla(idx){
+  const nome=state.duplas[idx];
+  askConfirm(`Excluir a dupla "${nome}"? A chave será remontada.`,()=>{
+    state.duplas.splice(idx,1);
+    state.seeds = state.duplas.slice();
+    resetTorneioState();
+    applySeeds(); save(); render();
+    toast('🗑️ Dupla removida.');
+  });
+}
+
+function renderDrawSeeds(){
+  // lista de gestão de duplas
+  const mgr = document.getElementById('duplasMgr');
+  if(mgr){
+    mgr.innerHTML = state.duplas.map((nome,i)=>`
+      <div class="dupla-row">
+        <span class="dupla-idx">${i+1}</span>
+        <input class="dupla-input" value="${nome.replace(/"/g,'&quot;')}" data-idx="${i}">
+        <button class="dupla-del" data-del="${i}" title="Excluir">✕</button>
+      </div>`).join('');
+    // listeners
+    mgr.querySelectorAll('.dupla-input').forEach(inp=>{
+      inp.addEventListener('change',e=>editDupla(+e.target.dataset.idx, e.target.value));
+    });
+    mgr.querySelectorAll('.dupla-del').forEach(b=>{
+      b.addEventListener('click',e=>removeDupla(+e.target.dataset.del));
+    });
+  }
+  // info de byes
+  const info=document.getElementById('drawInfo');
+  if(info){
+    const N=state.duplas.length;
+    if(N<3){ info.textContent='Adicione pelo menos 3 duplas para gerar a chave.'; }
+    else{
+      const size=nextPow2(N), byes=size-N;
+      info.innerHTML = `<strong>${N} duplas</strong> · chave tamanho ${size} · <strong>${byes} bye${byes===1?'':'s'}</strong> (seed${byes===1?'':'s'} ${byes? '1'+(byes>1?'–'+byes:''):'—'} entra${byes===1?'':'m'} direto na 2ª rodada)`;
+    }
+  }
+  // seeds atuais
+  const wrap = document.getElementById('drawSeeds');
+  if(wrap){
+    const byes = BRACKET_INFO.byes||0;
+    wrap.innerHTML = Object.keys(TEAMS).map(n=>{
+      const isBye = (+n)<=byes;
+      return `<div style="display:flex;align-items:center;gap:9px;font-size:14px;font-weight:500">
+        <span style="flex:none;width:24px;height:24px;border-radius:50%;background:${isBye?'var(--orange)':'var(--teal)'};color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;display:grid;place-items:center">${n}</span>
+        <span>${TEAMS[n]}</span>
+        ${isBye?'<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;font-weight:700;background:var(--orange);color:#fff;padding:1px 6px;border-radius:3px;letter-spacing:.08em">Bye</span>':''}
+      </div>`;
+    }).join('');
+  }
+}
+
+/* ============================================================
    RENDER
    ============================================================ */
 function render(){
@@ -450,6 +630,7 @@ function render(){
   renderQueue();
   renderResults();
   renderStandings();
+  renderDrawSeeds();
   renderProgress();
   save();
 }
@@ -660,10 +841,27 @@ document.getElementById('modalBackdrop').addEventListener('click',e=>{
 });
 
 document.getElementById('resetBtn').addEventListener('click',()=>{
-  askConfirm('Zerar TODO o torneio? Todos os placares serão apagados.',()=>{
-    state={results:{},courts:[null,null,null],gf2needed:false};
-    save(); render(); toast('Torneio zerado.'); switchView('control');
+  askConfirm('Zerar os placares do torneio? As duplas e o sorteio atual serão mantidos.',()=>{
+    resetTorneioState();
+    save(); render(); toast('Placares zerados.'); switchView('control');
   });
+});
+
+document.getElementById('drawBtn').addEventListener('click',()=>{
+  const temJogos = Object.keys(state.results).length>0;
+  if(temJogos){
+    askConfirm('Já existem resultados registrados. Sortear de novo vai apagar todos os placares e remontar a chave. Continuar?', doDraw);
+  } else {
+    doDraw();
+  }
+});
+
+document.getElementById('addDuplaBtn').addEventListener('click',()=>{
+  const inp=document.getElementById('newDupla');
+  if(addDupla(inp.value)) inp.value='';
+});
+document.getElementById('newDupla').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){ const inp=e.target; if(addDupla(inp.value)) inp.value=''; }
 });
 
 /* ============================================================
