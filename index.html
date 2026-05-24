@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mesa de Controle · Torneio de Futevôlei</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand:#f4e3c1; --sand-deep:#e8cf9f; --ink:#1a1208;
+    --orange:#ff5e1a; --orange-deep:#e0440a;
+    --teal:#06857a; --teal-deep:#04645c;
+    --yellow:#ffc23d; --paper:#fffaf0; --line:#cdab74;
+    --lose:#b0531d; --green:#1f8a4c; --red:#cc3520;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Barlow',sans-serif;color:var(--ink);min-height:100vh;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(255,194,61,.25), transparent 40%),
+      radial-gradient(circle at 88% 92%, rgba(6,133,122,.18), transparent 45%),
+      var(--sand);
+    background-attachment:fixed;
+  }
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
+    background-image:radial-gradient(rgba(120,90,40,.08) 1px, transparent 1px);background-size:4px 4px}
+  .wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 14px 80px}
+
+  /* HEADER */
+  header{text-align:center;padding:30px 0 16px}
+  .kicker{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:.3em;
+    text-transform:uppercase;font-size:12px;color:var(--orange-deep);
+    border-top:2px solid var(--orange);border-bottom:2px solid var(--orange);
+    padding:4px 12px;display:inline-block;margin-bottom:10px}
+  h1{font-family:'Anton',sans-serif;font-weight:400;line-height:.92;
+    font-size:clamp(34px,7vw,64px);text-transform:uppercase;letter-spacing:.01em}
+  h1 .ball{color:var(--orange)}
+  .progress-line{font-family:'Barlow Condensed',sans-serif;font-weight:600;
+    text-transform:uppercase;letter-spacing:.1em;color:var(--teal-deep);margin-top:6px;font-size:15px}
+
+  /* TABS */
+  .tabs{display:flex;gap:7px;justify-content:center;margin:18px 0 22px;flex-wrap:wrap;
+    position:sticky;top:0;z-index:30;padding:12px 0;
+    background:linear-gradient(var(--sand) 72%, transparent)}
+  .tab{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;
+    text-transform:uppercase;letter-spacing:.06em;cursor:pointer;padding:10px 18px;
+    border:2.5px solid var(--ink);background:var(--paper);color:var(--ink);border-radius:4px;
+    transition:.15s;box-shadow:3px 3px 0 var(--ink)}
+  .tab:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+  .tab.active{background:var(--orange);color:#fff;border-color:var(--orange-deep);box-shadow:3px 3px 0 var(--orange-deep)}
+  .view{display:none;animation:fade .35s ease}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  /* COURTS */
+  .courts{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:26px}
+  .court{background:var(--paper);border:2.5px solid var(--ink);border-radius:10px;
+    box-shadow:5px 5px 0 var(--ink);overflow:hidden;display:flex;flex-direction:column}
+  .court-head{background:var(--ink);color:var(--sand);padding:8px 12px;display:flex;
+    align-items:center;justify-content:space-between}
+  .court-head .ct{font-family:'Anton',sans-serif;font-size:18px;letter-spacing:.04em}
+  .court-head .net{font-size:20px}
+  .court-body{padding:14px;flex:1;display:flex;flex-direction:column;gap:10px;min-height:170px}
+  .court.free .court-body{align-items:center;justify-content:center;text-align:center;color:#b39b6e}
+  .court.free .court-head{background:var(--teal-deep)}
+  .free-txt{font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;
+    letter-spacing:.1em;font-size:15px}
+  .court .gcode{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--orange-deep);text-align:center}
+  .court .phase-tag{font-size:10px;color:#9c7d44;text-align:center;text-transform:uppercase;
+    letter-spacing:.08em;font-weight:600;margin-top:-6px}
+  .team-row{display:flex;align-items:center;gap:8px}
+  .team-name{flex:1;font-weight:600;font-size:14px;line-height:1.15}
+  .score-input{width:46px;height:40px;text-align:center;font-family:'Anton',sans-serif;
+    font-size:20px;border:2px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink)}
+  .score-input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,94,26,.25)}
+  .vs-mini{text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;
+    color:var(--orange);font-size:12px;letter-spacing:.1em}
+  .btn{font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;
+    letter-spacing:.06em;cursor:pointer;border:2.5px solid var(--ink);border-radius:6px;
+    padding:9px;font-size:14px;transition:.15s;box-shadow:2px 2px 0 var(--ink);width:100%}
+  .btn:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--ink)}
+  .btn:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink)}
+  .btn-confirm{background:var(--green);color:#fff;border-color:#15643a;box-shadow:2px 2px 0 #15643a}
+  .btn-confirm:hover{box-shadow:3px 3px 0 #15643a}
+
+  /* QUEUE */
+  .panel-title{font-family:'Anton',sans-serif;font-size:clamp(20px,4vw,28px);text-transform:uppercase;
+    letter-spacing:.02em;margin:6px 0 4px;display:flex;align-items:center;gap:10px}
+  .panel-title .dot{width:14px;height:14px;border-radius:50%;background:var(--orange)}
+  .panel-note{font-size:13px;color:#6b5530;margin-bottom:16px;font-weight:500}
+  .qitem{display:flex;align-items:center;background:var(--paper);border:2px solid var(--ink);
+    border-radius:8px;margin-bottom:8px;overflow:hidden;box-shadow:2px 2px 0 rgba(26,18,8,.8)}
+  .qitem.waiting{opacity:.62;border-style:dashed}
+  .qitem .qcode{flex:none;width:58px;align-self:stretch;background:var(--ink);color:var(--yellow);
+    font-family:'Anton',sans-serif;font-size:15px;display:grid;place-items:center;text-align:center;line-height:1}
+  .qitem.waiting .qcode{background:#9c7d44;color:#fff}
+  .qbody{flex:1;padding:8px 12px}
+  .qbody .qmatch{font-size:14px;font-weight:600;line-height:1.25}
+  .qbody .qmatch .vs{color:var(--orange);font-weight:700;padding:0 6px;font-size:12px;
+    font-family:'Barlow Condensed',sans-serif}
+  .qbody .qstate{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+  .qstate.ready{color:var(--green)} .qstate.wait{color:#9c7d44} .qstate.live{color:var(--orange-deep)}
+  .feeder-txt{color:#9c7d44;font-style:italic}
+
+  /* RESULTS / DONE */
+  .done-item{display:flex;align-items:center;background:#f3ecd9;border:2px solid var(--line);
+    border-radius:8px;margin-bottom:7px;overflow:hidden}
+  .done-item .qcode{flex:none;width:54px;align-self:stretch;background:var(--teal-deep);color:#fff;
+    font-family:'Anton',sans-serif;font-size:14px;display:grid;place-items:center}
+  .done-body{flex:1;padding:7px 12px;font-size:13.5px}
+  .done-body .win{font-weight:700;color:var(--green)}
+  .done-body .lose{color:#9c7d44;text-decoration:line-through}
+  .done-score{flex:none;font-family:'Anton',sans-serif;font-size:17px;color:var(--ink);padding:0 14px}
+
+  /* BRACKET (mini standings) */
+  .standcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+  .standbox{background:var(--paper);border:2.5px solid var(--ink);border-radius:10px;
+    box-shadow:4px 4px 0 var(--ink);padding:14px 16px}
+  .standbox h4{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.08em;
+    font-size:14px;margin-bottom:10px;color:#fff;padding:4px 10px;border-radius:4px;display:inline-block}
+  .h-wb{background:var(--teal)} .h-lb{background:var(--lose)} .h-out{background:#7a6a4a} .h-champ{background:var(--orange-deep)}
+  .slist{list-style:none;font-size:13.5px}
+  .slist li{padding:5px 0;border-bottom:1px dashed var(--line);display:flex;justify-content:space-between;gap:8px}
+  .slist li:last-child{border-bottom:none}
+  .slist .badge{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;
+    padding:1px 7px;border-radius:10px;letter-spacing:.05em;white-space:nowrap}
+  .bg-w{background:#d6efe4;color:var(--teal-deep)} .bg-l{background:#fbe2cf;color:var(--lose)}
+  .bg-o{background:#e6ddc8;color:#7a6a4a}
+  .champ-banner{background:linear-gradient(135deg,var(--yellow),var(--orange));border:3px solid var(--ink);
+    border-radius:12px;padding:22px;text-align:center;box-shadow:6px 6px 0 var(--ink);margin-bottom:20px}
+  .champ-banner .lbl{font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;
+    letter-spacing:.2em;font-size:14px;color:var(--ink)}
+  .champ-banner .nm{font-family:'Anton',sans-serif;font-size:clamp(26px,6vw,44px);text-transform:uppercase;
+    color:var(--ink);margin-top:4px;line-height:1}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120px);
+    background:var(--ink);color:var(--sand);font-family:'Barlow Condensed',sans-serif;font-weight:600;
+    letter-spacing:.04em;padding:12px 22px;border-radius:30px;z-index:60;transition:.3s;
+    box-shadow:0 8px 24px rgba(0,0,0,.3);font-size:15px;max-width:90vw;text-align:center}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+
+  /* RESET BTN */
+  .toolbar{display:flex;justify-content:center;gap:10px;margin-top:30px;flex-wrap:wrap}
+  .btn-ghost{width:auto;background:transparent;color:#9c7d44;border-color:#cdab74;box-shadow:none;
+    font-size:12px;padding:7px 16px}
+  .btn-ghost:hover{box-shadow:none;background:#ede0c4;transform:none}
+
+  .empty-msg{text-align:center;color:#b39b6e;font-family:'Barlow Condensed',sans-serif;
+    font-weight:600;text-transform:uppercase;letter-spacing:.1em;padding:24px;font-size:15px}
+
+  /* MODAL */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(26,18,8,.55);z-index:80;
+    display:none;align-items:center;justify-content:center;padding:20px}
+  .modal-backdrop.show{display:flex;animation:fade .2s ease}
+  .modal{background:var(--paper);border:3px solid var(--ink);border-radius:12px;
+    box-shadow:7px 7px 0 var(--ink);max-width:380px;width:100%;padding:22px}
+  .modal-msg{font-weight:600;font-size:16px;line-height:1.35;margin-bottom:18px;text-align:center}
+  .modal-btns{display:flex;gap:10px}
+  .modal-btns .btn{width:auto;flex:1}
+  .modal-cancel{background:var(--paper);color:var(--ink)}
+  .modal-ok{background:var(--red);color:#fff;border-color:#992411;box-shadow:2px 2px 0 #992411}
+  .modal-ok:hover{box-shadow:3px 3px 0 #992411}
+
+  @media (max-width:760px){
+    .courts{grid-template-columns:1fr}
+  }
+  @media (max-width:380px){
+    .qitem .qcode{width:48px;font-size:13px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="kicker">Mesa de Controle · Ao Vivo</span>
+    <h1>Torneio de <span class="ball">Futevôlei</span></h1>
+    <div class="progress-line" id="progressLine">Carregando…</div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-view="control">🎮 Quadras</button>
+    <button class="tab" data-view="queue">⏭️ Fila</button>
+    <button class="tab" data-view="results">✅ Resultados</button>
+    <button class="tab" data-view="stand">🏆 Situação</button>
+  </div>
+
+  <!-- CONTROL -->
+  <section class="view active" id="control">
+    <div class="courts" id="courts"></div>
+    <div class="panel-title"><span class="dot"></span>Próximas na fila</div>
+    <p class="panel-note">Assim que uma quadra vaga, a próxima partida pronta entra automaticamente. As que ainda dependem de resultados ficam em espera.</p>
+    <div id="nextPreview"></div>
+  </section>
+
+  <!-- QUEUE -->
+  <section class="view" id="queue">
+    <div class="panel-title"><span class="dot"></span>Fila completa de jogos</div>
+    <p class="panel-note">Ordem geral das 27 partidas possíveis. Verde = pronta · Laranja = em quadra · Bege = aguardando definição das duplas.</p>
+    <div id="queueList"></div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="view" id="results">
+    <div class="panel-title"><span class="dot"></span>Resultados registrados</div>
+    <p class="panel-note">Histórico dos jogos já decididos. Toque num resultado pra corrigir, se errar o placar.</p>
+    <div id="resultsList"></div>
+  </section>
+
+  <!-- STANDINGS -->
+  <section class="view" id="stand">
+    <div id="champZone"></div>
+    <div class="panel-title"><span class="dot"></span>Situação das duplas</div>
+    <p class="panel-note">Onde cada dupla está agora: viva na chave de cima, na repescagem, ou eliminada (2 derrotas).</p>
+    <div class="standcols" id="standCols"></div>
+  </section>
+
+  <div class="toolbar">
+    <button class="btn btn-ghost" id="resetBtn">↺ Zerar torneio</button>
+  </div>
+
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <div class="modal-msg" id="modalMsg"></div>
+    <div class="modal-btns">
+      <button class="btn modal-cancel" id="modalCancel">Cancelar</button>
+      <button class="btn modal-ok" id="modalOk">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   DADOS BASE — duplas por seed (sorteio já feito)
+   ============================================================ */
+const TEAMS = {
+  1:"Ricks e Alex Dias", 2:"Markim e Arthur", 3:"Saulo e Hiltinho",
+  4:"Joãozinho e Bruno Leonardo", 5:"João Neto e Caio", 6:"Pedrão e Léo Gomes",
+  7:"Túlio e Roosevelt Jr", 8:"Renato e Paulista", 9:"Japa e Alan Calixto",
+  10:"Rodrigão e Thiago Rômulo", 11:"Marcel e Pedro Renato", 12:"Bifinho e Gabriel",
+  13:"Neto Caixeta e Pinheiro", 14:"Dieguim e Jesser"
+};
+
+/* Referência a um competidor: seed direto, ou vencedor/perdedor de uma partida */
+const seed = n => ({type:'seed', n});
+const win  = id => ({type:'win', id});
+const lose = id => ({type:'lose', id});
+
+/* ============================================================
+   ESTRUTURA DAS PARTIDAS
+   order = sequência sugerida; phase = rótulo; bracket = WB/LB/GF
+   ============================================================ */
+const MATCH_DEFS = [
+  // Winners R1
+  {id:'W1', order:1, phase:'Vencedores · 1ª Rodada', bracket:'WB', a:seed(3),  b:seed(14)},
+  {id:'W2', order:2, phase:'Vencedores · 1ª Rodada', bracket:'WB', a:seed(4),  b:seed(13)},
+  {id:'W3', order:3, phase:'Vencedores · 1ª Rodada', bracket:'WB', a:seed(5),  b:seed(12)},
+  {id:'W4', order:4, phase:'Vencedores · 1ª Rodada', bracket:'WB', a:seed(6),  b:seed(11)},
+  {id:'W5', order:5, phase:'Vencedores · 1ª Rodada', bracket:'WB', a:seed(7),  b:seed(10)},
+  {id:'W6', order:6, phase:'Vencedores · 1ª Rodada', bracket:'WB', a:seed(8),  b:seed(9)},
+  // Winners R2
+  {id:'W7', order:7, phase:'Vencedores · 2ª Rodada', bracket:'WB', a:seed(1),  b:win('W6')},
+  {id:'W8', order:8, phase:'Vencedores · 2ª Rodada', bracket:'WB', a:win('W1'),b:win('W5')},
+  {id:'W9', order:9, phase:'Vencedores · 2ª Rodada', bracket:'WB', a:seed(2),  b:win('W4')},
+  {id:'W10',order:10,phase:'Vencedores · 2ª Rodada', bracket:'WB', a:win('W2'),b:win('W3')},
+  // Losers R1
+  {id:'L1', order:11,phase:'Repescagem · Repesca 1', bracket:'LB', a:lose('W1'),b:lose('W6')},
+  {id:'L2', order:12,phase:'Repescagem · Repesca 1', bracket:'LB', a:lose('W2'),b:lose('W5')},
+  {id:'L3', order:13,phase:'Repescagem · Repesca 1', bracket:'LB', a:lose('W3'),b:lose('W4')},
+  // Winners semis
+  {id:'W11',order:14,phase:'Vencedores · Semifinal', bracket:'WB', a:win('W7'),b:win('W8')},
+  {id:'W12',order:15,phase:'Vencedores · Semifinal', bracket:'WB', a:win('W9'),b:win('W10')},
+  // Losers R2
+  {id:'L4', order:16,phase:'Repescagem · Repesca 2', bracket:'LB', a:win('L1'),b:lose('W10')},
+  {id:'L5', order:17,phase:'Repescagem · Repesca 2', bracket:'LB', a:win('L2'),b:lose('W9')},
+  {id:'L6', order:18,phase:'Repescagem · Repesca 2', bracket:'LB', a:win('L3'),b:lose('W8')},
+  // Losers R3
+  {id:'L7', order:19,phase:'Repescagem · Repesca 3', bracket:'LB', a:win('L4'),b:lose('W7')},
+  {id:'L8', order:20,phase:'Repescagem · Repesca 3', bracket:'LB', a:win('L5'),b:win('L6')},
+  // Winners final
+  {id:'W13',order:21,phase:'Vencedores · Final', bracket:'WB', a:win('W11'),b:win('W12')},
+  // Losers R4
+  {id:'L9', order:22,phase:'Repescagem · Repesca 4', bracket:'LB', a:win('L7'),b:lose('W12')},
+  {id:'L10',order:23,phase:'Repescagem · Repesca 4', bracket:'LB', a:win('L8'),b:lose('W11')},
+  // Losers semi
+  {id:'L11',order:24,phase:'Repescagem · Semifinal', bracket:'LB', a:win('L9'),b:win('L10')},
+  // Losers final
+  {id:'L12',order:25,phase:'Repescagem · Final', bracket:'LB', a:win('L11'),b:lose('W13')},
+  // Grand final
+  {id:'GF', order:26,phase:'GRANDE FINAL', bracket:'GF', a:win('W13'),b:win('L12')},
+  // Reset final (conditional)
+  {id:'GF2',order:27,phase:'FINAL RESET (só se a repescagem vencer a GF)', bracket:'GF', a:win('W13'),b:win('L12'), conditional:true}
+];
+
+const MATCH_BY_ID = Object.fromEntries(MATCH_DEFS.map(m=>[m.id,m]));
+const NUM_COURTS = 3;
+const STORE_KEY = 'futevolei_torneio_v1';
+
+/* ============================================================
+   ESTADO
+   results: { matchId: {aScore, bScore, winnerSide:'a'|'b'} }
+   courts: [ matchId|null, matchId|null, matchId|null ]
+   ============================================================ */
+let state = { results:{}, courts:[null,null,null], gf2needed:false };
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){ const p=JSON.parse(raw); state = Object.assign(state,p);
+      if(!Array.isArray(state.courts)||state.courts.length!==NUM_COURTS) state.courts=[null,null,null]; }
+  }catch(e){ console.warn('load fail',e); }
+}
+function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
+
+/* ---- resolver competidor -> nome + se está pronto ---- */
+function resolveRef(ref){
+  if(ref.type==='seed') return {ready:true, name:TEAMS[ref.n], seed:ref.n};
+  const r = state.results[ref.id];
+  if(!r) {
+    const m = MATCH_BY_ID[ref.id];
+    const verb = ref.type==='win'?'Vencedor':'Perdedor';
+    return {ready:false, name:`${verb} ${ref.id}`};
+  }
+  if(ref.type==='win'){
+    const side = r.winnerSide;
+    return refResolveFromResult(ref.id, side);
+  } else {
+    const side = r.winnerSide==='a'?'b':'a';
+    return refResolveFromResult(ref.id, side);
+  }
+}
+function refResolveFromResult(matchId, side){
+  const m = MATCH_BY_ID[matchId];
+  const inner = side==='a'? m.a : m.b;
+  return resolveRef(inner); // recursivo: resolve até chegar num seed
+}
+
+function matchReady(m){
+  return resolveRef(m.a).ready && resolveRef(m.b).ready;
+}
+function matchDone(id){ return !!state.results[id]; }
+function matchOnCourt(id){ return state.courts.indexOf(id); } // -1 se não
+
+/* GF2 só existe se GF foi vencida pelo lado da repescagem (lado b = win L12) */
+function gf2Active(){
+  const gf = state.results['GF'];
+  if(!gf) return false;
+  // lado 'b' da GF é o vencedor de L12 (repescagem). Se ele venceu, precisa reset.
+  return gf.winnerSide==='b';
+}
+
+/* lista de partidas "vivas" (não conclusas), exceto GF2 se não ativa */
+function activeMatches(){
+  return MATCH_DEFS.filter(m=>{
+    if(m.id==='GF2' && !gf2Active()) return false;
+    return true;
+  });
+}
+
+/* ============================================================
+   MOTOR DE ATRIBUIÇÃO AUTOMÁTICA ÀS QUADRAS
+   ============================================================ */
+function assignCourts(){
+  // tira de quadra qualquer partida que já tenha resultado (segurança)
+  state.courts = state.courts.map(id => (id && matchDone(id)) ? null : id);
+
+  // partidas que já estão em quadra
+  const onCourt = new Set(state.courts.filter(Boolean));
+
+  // candidatas: prontas, não jogadas, não em quadra, respeitando GF2
+  const candidates = activeMatches()
+    .filter(m=>!matchDone(m.id) && !onCourt.has(m.id) && matchReady(m))
+    .sort((a,b)=>a.order-b.order);
+
+  for(let c=0;c<NUM_COURTS && candidates.length;c++){
+    if(state.courts[c]===null){
+      const next = candidates.shift();
+      state.courts[c] = next.id;
+      onCourt.add(next.id);
+    }
+  }
+}
+
+/* ============================================================
+   REGISTRAR RESULTADO
+   ============================================================ */
+function submitResult(matchId, aScore, bScore){
+  if(aScore===bScore){ toast('Placar não pode dar empate!'); return false; }
+  const winnerSide = aScore>bScore ? 'a':'b';
+  state.results[matchId] = {aScore, bScore, winnerSide};
+  // libera a quadra
+  const ci = state.courts.indexOf(matchId);
+  if(ci>=0) state.courts[ci]=null;
+  assignCourts();
+  save();
+  render();
+  const w = resolveRef(MATCH_BY_ID[matchId].winnerSide==='a'?{type:'win',id:matchId}:{type:'win',id:matchId});
+  toast(`✅ ${matchId} registrado · vencedor: ${winnerName(matchId)}`);
+  return true;
+}
+function winnerName(matchId){
+  const r = state.results[matchId]; if(!r) return '';
+  return resolveRef({type:'win',id:matchId}).name;
+}
+function loserName(matchId){
+  const r = state.results[matchId]; if(!r) return '';
+  return resolveRef({type:'lose',id:matchId}).name;
+}
+
+function editResult(matchId){
+  const hadDependentsPlayed = anyDependentPlayed(matchId);
+  const doEdit = ()=>{
+    delete state.results[matchId];
+    assignCourts();
+    save(); render();
+    toast(`✏️ ${matchId} reaberto pra correção`);
+    switchView('control');
+  };
+  if(hadDependentsPlayed){
+    askConfirm('Já há jogos seguintes registrados que dependem deste resultado. Corrigir pode bagunçar a chave. Continuar mesmo assim?', doEdit);
+  } else {
+    doEdit();
+  }
+}
+function anyDependentPlayed(matchId){
+  // procura partidas jogadas que referenciam matchId
+  return MATCH_DEFS.some(m=>{
+    if(!state.results[m.id]) return false;
+    return [m.a,m.b].some(ref=>ref.type!=='seed' && ref.id===matchId);
+  });
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render(){
+  assignCourts(); // garante quadras preenchidas
+  renderCourts();
+  renderNextPreview();
+  renderQueue();
+  renderResults();
+  renderStandings();
+  renderProgress();
+  save();
+}
+
+function renderProgress(){
+  const total = activeMatches().length;
+  const done = activeMatches().filter(m=>matchDone(m.id)).length;
+  const champ = getChampion();
+  const el = document.getElementById('progressLine');
+  if(champ){ el.innerHTML = `🏆 Campeão: ${champ}`; }
+  else el.textContent = `${done} de ${total} jogos concluídos`;
+}
+
+function netIcon(){return '🏐';}
+
+function renderCourts(){
+  const wrap = document.getElementById('courts');
+  wrap.innerHTML='';
+  for(let i=0;i<NUM_COURTS;i++){
+    const mid = state.courts[i];
+    const div = document.createElement('div');
+    div.className = 'court' + (mid?'':' free');
+    if(!mid){
+      div.innerHTML = `
+        <div class="court-head"><span class="ct">Quadra ${i+1}</span><span class="net">${netIcon()}</span></div>
+        <div class="court-body"><span class="free-txt">Livre<br>aguardando jogo</span></div>`;
+    } else {
+      const m = MATCH_BY_ID[mid];
+      const A = resolveRef(m.a), B = resolveRef(m.b);
+      div.innerHTML = `
+        <div class="court-head"><span class="ct">Quadra ${i+1}</span><span class="net">${netIcon()}</span></div>
+        <div class="court-body">
+          <div class="gcode">${m.id==='GF'?'GRANDE FINAL':m.id==='GF2'?'FINAL RESET':m.id}</div>
+          <div class="phase-tag">${m.phase}</div>
+          <div class="team-row">
+            <span class="team-name">${A.name}</span>
+            <input class="score-input" type="number" inputmode="numeric" min="0" id="sa_${mid}" placeholder="0">
+          </div>
+          <div class="vs-mini">VS</div>
+          <div class="team-row">
+            <span class="team-name">${B.name}</span>
+            <input class="score-input" type="number" inputmode="numeric" min="0" id="sb_${mid}" placeholder="0">
+          </div>
+          <button class="btn btn-confirm" onclick="confirmCourt('${mid}')">Registrar resultado</button>
+        </div>`;
+    }
+    wrap.appendChild(div);
+  }
+}
+
+window.confirmCourt = function(mid){
+  const a = parseInt(document.getElementById('sa_'+mid).value,10);
+  const b = parseInt(document.getElementById('sb_'+mid).value,10);
+  if(isNaN(a)||isNaN(b)){ toast('Preencha os dois placares.'); return; }
+  if(a<0||b<0){ toast('Placar inválido.'); return; }
+  submitResult(mid,a,b);
+};
+
+function renderNextPreview(){
+  const wrap = document.getElementById('nextPreview');
+  const onCourt = new Set(state.courts.filter(Boolean));
+  const list = activeMatches()
+    .filter(m=>!matchDone(m.id) && !onCourt.has(m.id))
+    .sort((a,b)=>a.order-b.order)
+    .slice(0,6);
+  if(!list.length){ wrap.innerHTML = `<div class="empty-msg">Nenhuma partida na espera.</div>`; return; }
+  wrap.innerHTML = list.map(m=>qItemHTML(m)).join('');
+}
+
+function qItemHTML(m){
+  const A = resolveRef(m.a), B = resolveRef(m.b);
+  const ready = A.ready && B.ready;
+  const onCourtIdx = state.courts.indexOf(m.id);
+  let stateLabel, stateCls, cls='';
+  if(onCourtIdx>=0){ stateLabel=`Em jogo · Quadra ${onCourtIdx+1}`; stateCls='live'; }
+  else if(ready){ stateLabel='Pronta'; stateCls='ready'; }
+  else { stateLabel='Aguardando duplas'; stateCls='wait'; cls='waiting'; }
+  const nameA = A.ready? A.name : `<span class="feeder-txt">${A.name}</span>`;
+  const nameB = B.ready? B.name : `<span class="feeder-txt">${B.name}</span>`;
+  const code = m.id==='GF'?'GF':m.id==='GF2'?'RST':m.id;
+  return `<div class="qitem ${cls}">
+    <div class="qcode">${code}</div>
+    <div class="qbody">
+      <div class="qmatch">${nameA} <span class="vs">VS</span> ${nameB}</div>
+      <div class="qstate ${stateCls}">${stateLabel} · ${m.phase}</div>
+    </div></div>`;
+}
+
+function renderQueue(){
+  const wrap = document.getElementById('queueList');
+  const list = activeMatches().slice().sort((a,b)=>a.order-b.order);
+  wrap.innerHTML = list.map(m=>{
+    if(matchDone(m.id)){
+      const r=state.results[m.id];
+      return `<div class="done-item">
+        <div class="qcode">${m.id==='GF'?'GF':m.id==='GF2'?'RST':m.id}</div>
+        <div class="done-body"><span class="win">${winnerName(m.id)}</span> derrotou <span class="lose">${loserName(m.id)}</span></div>
+        <div class="done-score">${r.aScore}×${r.bScore}</div></div>`;
+    }
+    return qItemHTML(m);
+  }).join('');
+}
+
+function renderResults(){
+  const wrap = document.getElementById('resultsList');
+  const done = activeMatches().filter(m=>matchDone(m.id)).sort((a,b)=>a.order-b.order);
+  if(!done.length){ wrap.innerHTML = `<div class="empty-msg">Nenhum resultado ainda.</div>`; return; }
+  wrap.innerHTML = done.map(m=>{
+    const r=state.results[m.id];
+    const sa = r.winnerSide==='a';
+    return `<div class="done-item" style="cursor:pointer" onclick="editResult('${m.id}')" title="Toque pra corrigir">
+      <div class="qcode">${m.id==='GF'?'GF':m.id==='GF2'?'RST':m.id}</div>
+      <div class="done-body">
+        <span class="${sa?'win':'lose'}">${resolveRef({type: sa?'win':'lose',id:m.id}).name}</span>
+        &nbsp;×&nbsp;
+        <span class="${sa?'lose':'win'}">${resolveRef({type: sa?'lose':'win',id:m.id}).name}</span>
+        <div style="font-size:10px;color:#9c7d44;text-transform:uppercase;letter-spacing:.06em;margin-top:2px">${m.phase} · toque pra corrigir</div>
+      </div>
+      <div class="done-score">${r.aScore}×${r.bScore}</div></div>`;
+  }).join('');
+}
+window.editResult = editResult;
+
+/* ---- Situação das duplas ---- */
+function getLossCount(){
+  // conta derrotas por nome de dupla
+  const losses = {};
+  Object.values(TEAMS).forEach(n=>losses[n]=0);
+  activeMatches().forEach(m=>{
+    if(matchDone(m.id) && m.id!=='GF2'){ // GF2 derrota = eliminação final tb conta
+      const ln = loserName(m.id);
+      if(ln in losses) losses[ln]++;
+    }
+    if(m.id==='GF2' && matchDone('GF2')){
+      const ln = loserName('GF2'); if(ln in losses) losses[ln]++;
+    }
+    // GF: perdedor pode ser o WB (1ª derrota) -> vai pro reset, não elimina ainda
+  });
+  return losses;
+}
+function getChampion(){
+  if(gf2Active()){
+    if(matchDone('GF2')) return winnerName('GF2');
+    return null;
+  }
+  if(matchDone('GF')){
+    // se WB venceu a GF (lado a), campeão direto
+    if(state.results['GF'].winnerSide==='a') return winnerName('GF');
+  }
+  return null;
+}
+
+function renderStandings(){
+  const champ = getChampion();
+  const cz = document.getElementById('champZone');
+  cz.innerHTML = champ ? `<div class="champ-banner"><div class="lbl">🏆 Campeão do Torneio</div><div class="nm">${champ}</div></div>` : '';
+
+  const losses = getLossCount();
+  const out=[], inLB=[], inWB=[];
+  // determina situação aproximada: eliminado se 2 derrotas; senão se tem 1 derrota -> repescagem; senão WB
+  Object.values(TEAMS).forEach(n=>{
+    if(losses[n]>=2) out.push(n);
+    else if(losses[n]===1) inLB.push(n);
+    else inWB.push(n);
+  });
+  // campeão e vice não ficam como "eliminados" visualmente mesmo com derrota
+  const html = (title,cls,arr,badgeCls,badgeTxt)=>`
+    <div class="standbox"><h4 class="${cls}">${title} (${arr.length})</h4>
+      <ul class="slist">${arr.length?arr.map(n=>`<li><span>${n}</span><span class="badge ${badgeCls}">${badgeTxt}</span></li>`).join(''):'<li style="color:#b39b6e">—</li>'}</ul></div>`;
+  document.getElementById('standCols').innerHTML =
+    html('Vivas na chave de cima','h-wb',inWB,'bg-w','0 derrota') +
+    html('Na repescagem','h-lb',inLB,'bg-l','1 derrota') +
+    html('Eliminadas','h-out',out,'bg-o','2 derrotas');
+}
+
+/* ============================================================
+   TABS / TOAST / RESET
+   ============================================================ */
+function switchView(v){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.view===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('active',s.id===v));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchView(t.dataset.view)));
+
+let toastTimer;
+function toast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+/* confirmação própria (não depende do confirm() do navegador) */
+let _confirmCb=null;
+function askConfirm(msg, onYes){
+  _confirmCb=onYes;
+  document.getElementById('modalMsg').textContent=msg;
+  document.getElementById('modalBackdrop').classList.add('show');
+}
+document.getElementById('modalOk').addEventListener('click',()=>{
+  document.getElementById('modalBackdrop').classList.remove('show');
+  const cb=_confirmCb; _confirmCb=null; if(cb)cb();
+});
+document.getElementById('modalCancel').addEventListener('click',()=>{
+  document.getElementById('modalBackdrop').classList.remove('show'); _confirmCb=null;
+});
+document.getElementById('modalBackdrop').addEventListener('click',e=>{
+  if(e.target.id==='modalBackdrop'){ document.getElementById('modalBackdrop').classList.remove('show'); _confirmCb=null; }
+});
+
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  askConfirm('Zerar TODO o torneio? Todos os placares serão apagados.',()=>{
+    state={results:{},courts:[null,null,null],gf2needed:false};
+    save(); render(); toast('Torneio zerado.'); switchView('control');
+  });
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+load();
+render();
+</script>
+</body>
+</html>
