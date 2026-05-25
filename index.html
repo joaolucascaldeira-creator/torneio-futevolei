@@ -40,6 +40,19 @@
   h1 .ball{color:var(--orange)}
   .progress-line{font-family:'Barlow Condensed',sans-serif;font-weight:600;
     text-transform:uppercase;letter-spacing:.1em;color:var(--teal-deep);margin-top:6px;font-size:15px}
+  .sync-bar{display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:14px}
+  .sync-status{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;
+    letter-spacing:.05em;padding:6px 12px;border-radius:20px;background:var(--paper);
+    border:2px solid var(--ink);white-space:nowrap}
+  .sync-status.on{background:#d6efe4;color:var(--teal-deep);border-color:var(--teal)}
+  .sync-status.off{background:#f3ecd9;color:#9c7d44}
+  .sync-status.err{background:#fbe2cf;color:var(--lose);border-color:var(--lose)}
+  .sync-room{height:36px;padding:0 12px;font-family:'Barlow',sans-serif;font-size:14px;font-weight:500;
+    border:2px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink);max-width:240px}
+  .sync-room:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,94,26,.22)}
+  .sync-mode{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;
+    text-transform:uppercase;letter-spacing:.05em;color:var(--ink);display:flex;align-items:center;gap:5px;cursor:pointer}
+  .sync-mode input{width:17px;height:17px;accent-color:var(--teal);cursor:pointer}
 
   /* TABS */
   .tabs{display:flex;gap:7px;justify-content:center;margin:18px 0 22px;flex-wrap:wrap;
@@ -86,6 +99,10 @@
   .btn:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink)}
   .btn-confirm{background:var(--green);color:#fff;border-color:#15643a;box-shadow:2px 2px 0 #15643a}
   .btn-confirm:hover{box-shadow:3px 3px 0 #15643a}
+  .btn-timer-start{background:var(--teal);color:#fff;border-color:var(--teal-deep);box-shadow:2px 2px 0 var(--teal-deep)}
+  .btn-timer-start:hover{box-shadow:3px 3px 0 var(--teal-deep)}
+  .btn-timer-reset{background:var(--paper);color:var(--lose);border-color:var(--lose);box-shadow:2px 2px 0 var(--lose);font-size:12px;padding:6px}
+  .btn-timer-reset:hover{box-shadow:3px 3px 0 var(--lose)}
 
   /* QUEUE */
   .panel-title{font-family:'Anton',sans-serif;font-size:clamp(20px,4vw,28px);text-transform:uppercase;
@@ -164,6 +181,10 @@
   .dupla-del{flex:none;width:34px;height:34px;border:2px solid var(--lose);background:#fbe2cf;color:var(--lose);
     border-radius:6px;font-weight:700;cursor:pointer;font-size:14px;line-height:1}
   .dupla-del:hover{background:var(--lose);color:#fff}
+  .bye-check{flex:none;display:flex;align-items:center;gap:4px;font-family:'Barlow Condensed',sans-serif;
+    font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--orange-deep);cursor:pointer}
+  .bye-check input{width:18px;height:18px;accent-color:var(--orange);cursor:pointer}
+  .bye-check input:disabled{cursor:not-allowed}
 
   /* MODAL */
   .modal-backdrop{position:fixed;inset:0;background:rgba(26,18,8,.55);z-index:80;
@@ -184,7 +205,137 @@
   @media (max-width:380px){
     .qitem .qcode{width:48px;font-size:13px}
   }
+
+  /* ---- CONFETE ---- */
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:100}
+
+  /* ---- ROLETA DE SORTEIO (overlay) ---- */
+  .draw-overlay{position:fixed;inset:0;z-index:95;background:rgba(26,18,8,.92);
+    display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+  .draw-overlay.show{display:flex;animation:fade .25s ease}
+  .draw-stage-lbl{font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;
+    letter-spacing:.2em;color:var(--yellow);font-size:15px;margin-bottom:8px}
+  .draw-seednum{font-family:'Anton',sans-serif;font-size:clamp(40px,12vw,80px);color:#fff;line-height:1}
+  .draw-roller{font-family:'Anton',sans-serif;font-size:clamp(26px,7vw,52px);color:var(--orange);
+    text-transform:uppercase;min-height:1.2em;margin:10px 0 4px;letter-spacing:.01em;
+    text-shadow:0 4px 0 rgba(0,0,0,.35);transition:transform .08s}
+  .draw-roller.bye{color:var(--yellow)}
+  .draw-byetag{font-family:'Barlow Condensed',sans-serif;font-weight:700;background:var(--yellow);
+    color:var(--ink);padding:3px 12px;border-radius:20px;font-size:14px;letter-spacing:.1em;
+    text-transform:uppercase;display:none}
+  .draw-byetag.show{display:inline-block}
+  .draw-locked{margin-top:22px;max-width:520px;width:100%}
+  .draw-locked-item{display:flex;align-items:center;gap:10px;background:rgba(255,250,240,.08);
+    border:1px solid rgba(255,250,240,.18);border-radius:8px;padding:7px 12px;margin-bottom:6px;
+    color:#fff;font-weight:600;font-size:14px;animation:lockIn .3s ease}
+  @keyframes lockIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:none}}
+  .draw-locked-item .dn{flex:none;width:24px;height:24px;border-radius:50%;background:var(--teal);
+    color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;display:grid;place-items:center}
+  .draw-locked-item.bye .dn{background:var(--orange)}
+  .draw-skip{margin-top:18px;font-family:'Barlow Condensed',sans-serif;font-weight:600;
+    text-transform:uppercase;letter-spacing:.08em;font-size:13px;color:rgba(255,250,240,.6);
+    background:none;border:1px solid rgba(255,250,240,.3);border-radius:20px;padding:7px 18px;cursor:pointer}
+  .draw-skip:hover{color:#fff;border-color:#fff}
+
+  /* ---- CRONÔMETRO POR QUADRA ---- */
+  .court-timer{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;
+    letter-spacing:.05em;display:flex;align-items:center;gap:6px;color:var(--sand)}
+  .court-timer .dotpulse{width:8px;height:8px;border-radius:50%;background:#7CFF9B;
+    animation:pulse 1.4s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .timer-chip{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;
+    background:#f3ecd9;border:1.5px solid var(--line);border-radius:20px;padding:3px 10px;
+    color:var(--teal-deep);text-align:center;margin-top:2px}
+
+  /* ---- BOTÕES DE TOPO EXTRAS ---- */
+  .top-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:-8px 0 20px}
+  .mini-btn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;
+    text-transform:uppercase;letter-spacing:.06em;cursor:pointer;padding:8px 16px;
+    border:2px solid var(--ink);background:var(--paper);color:var(--ink);border-radius:30px;
+    box-shadow:2px 2px 0 var(--ink);transition:.15s;display:inline-flex;align-items:center;gap:6px}
+  .mini-btn:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--ink)}
+  .mini-btn.wa{background:#25D366;color:#fff;border-color:#1da851;box-shadow:2px 2px 0 #1da851}
+  .mini-btn.tv{background:var(--ink);color:var(--yellow)}
+
+  /* ---- MODO TV / TELÃO ---- */
+  .tv-overlay{position:fixed;inset:0;z-index:88;background:
+      radial-gradient(circle at 15% 12%, rgba(255,194,61,.15), transparent 45%),
+      radial-gradient(circle at 85% 88%, rgba(6,133,122,.15), transparent 45%),
+      #14100a;
+    display:none;flex-direction:column;padding:3vh 3vw;overflow:hidden}
+  /* esconde qualquer scrollbar dentro do telão (Chrome/Edge/Safari e Firefox) */
+  .tv-overlay *::-webkit-scrollbar{display:none}
+  .tv-overlay *{scrollbar-width:none;-ms-overflow-style:none}
+  .tv-overlay.show{display:flex}
+  .tv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:2.5vh}
+  .tv-title{font-family:'Anton',sans-serif;font-size:clamp(24px,4vw,48px);color:#fff;text-transform:uppercase}
+  .tv-title .ball{color:var(--orange)}
+  .tv-close{font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;
+    letter-spacing:.08em;background:none;border:2px solid rgba(255,255,255,.4);color:#fff;
+    border-radius:30px;padding:8px 20px;cursor:pointer;font-size:15px}
+  .tv-close:hover{border-color:#fff;background:rgba(255,255,255,.1)}
+  .tv-courts{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:2vw;align-content:center}
+  .tv-court{background:rgba(255,250,240,.04);border:2px solid rgba(255,250,240,.15);border-radius:16px;
+    padding:3vh 2vw;display:flex;flex-direction:column}
+  .tv-court-num{font-family:'Anton',sans-serif;font-size:clamp(18px,2.5vw,30px);color:var(--yellow);
+    text-transform:uppercase;margin-bottom:1.5vh;display:flex;justify-content:space-between;align-items:center}
+  .tv-court-num .tmr{font-size:clamp(14px,1.8vw,22px);color:#7CFF9B;font-family:'Barlow Condensed',sans-serif}
+  .tv-team{font-family:'Barlow Condensed',sans-serif;font-weight:700;color:#fff;
+    font-size:clamp(18px,2.4vw,34px);line-height:1.15;margin:1vh 0}
+  .tv-vs{font-family:'Anton',sans-serif;color:var(--orange);font-size:clamp(14px,1.8vw,24px);margin:.5vh 0}
+  .tv-phase{font-family:'Barlow Condensed',sans-serif;color:rgba(255,250,240,.55);
+    text-transform:uppercase;letter-spacing:.08em;font-size:clamp(11px,1.3vw,16px);margin-top:auto;padding-top:1.5vh}
+  .tv-free{font-family:'Barlow Condensed',sans-serif;color:rgba(255,250,240,.4);
+    text-transform:uppercase;letter-spacing:.12em;font-size:clamp(16px,2vw,26px);
+    text-align:center;margin:auto}
+  .tv-next{margin-top:2.5vh;background:rgba(255,250,240,.04);border-radius:12px;padding:2vh 2vw}
+  .tv-next-lbl{font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;
+    letter-spacing:.1em;color:var(--orange);font-size:clamp(12px,1.5vw,18px);margin-bottom:1vh}
+  .tv-next-item{font-family:'Barlow Condensed',sans-serif;color:#fff;font-size:clamp(14px,1.6vw,22px);
+    display:inline-block;margin-right:2vw;opacity:.85}
+
+  /* telas alternáveis e indicador */
+  .tv-screen{flex:1;display:flex;flex-direction:column;min-height:0;animation:tvFade .5s ease}
+  @keyframes tvFade{from{opacity:0}to{opacity:1}}
+  .tv-dots{display:flex;gap:10px;align-items:center}
+  .tv-dot{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.25);transition:.3s}
+  .tv-dot.on{background:var(--orange);transform:scale(1.3)}
+
+  /* chave do telão — cabe tudo na tela, sem rolagem.
+     Dividida em faixas (vencedores / repescagem / final), cada faixa com colunas que
+     se ajustam à largura. Tamanhos em vmin/cqw para encolher conforme o conteúdo. */
+  .tv-bracket-scroll{flex:1;display:flex;flex-direction:column;gap:.8vh;min-height:0;overflow:hidden}
+  .tv-band{display:flex;flex-direction:column;min-height:0;flex:1 1 0}
+  .tv-band-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;
+    letter-spacing:.12em;font-size:clamp(11px,1.4vh,18px);margin-bottom:.4vh;display:flex;align-items:center;gap:8px}
+  .tv-band-title .pill{width:12px;height:12px;border-radius:3px}
+  .tv-band-title .pill.wb{background:var(--teal)} .tv-band-title .pill.lb{background:var(--lose)} .tv-band-title .pill.gf{background:var(--orange-deep)}
+  .tv-band-cols{flex:1;display:flex;gap:.6vw;min-height:0;align-items:stretch}
+  .tv-bcol{flex:1 1 0;min-width:0;display:flex;flex-direction:column;justify-content:space-evenly;gap:.5vh}
+  .tv-bcol-lbl{font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;
+    letter-spacing:.04em;font-size:clamp(8px,.95vw,14px);color:#fff;text-align:center;padding:.3vh;
+    border-radius:5px;margin-bottom:.3vh;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tv-bcol-lbl.wb{background:var(--teal)} .tv-bcol-lbl.lb{background:var(--lose)} .tv-bcol-lbl.gf{background:var(--orange-deep)}
+  .tv-bmatch{background:rgba(255,250,240,.05);border:1px solid rgba(255,250,240,.14);border-radius:6px;overflow:hidden}
+  .tv-bmatch.live{border-color:var(--yellow);box-shadow:0 0 0 2px rgba(255,194,61,.4)}
+  .tv-bteam{font-family:'Barlow Condensed',sans-serif;font-weight:600;color:#fff;
+    font-size:clamp(8px,.95vw,15px);padding:.35vh .4vw;line-height:1.1;display:flex;justify-content:space-between;gap:4px;
+    border-bottom:1px solid rgba(255,250,240,.1);white-space:nowrap;overflow:hidden}
+  .tv-bteam span:first-child{overflow:hidden;text-overflow:ellipsis}
+  .tv-bteam:last-child{border-bottom:none}
+  .tv-bteam.win{color:#7CFF9B;font-weight:700}
+  .tv-bteam.out{color:rgba(255,250,240,.35);text-decoration:line-through}
+  .tv-bteam .sc{font-family:'Anton',sans-serif;opacity:.9;flex:none}
+  .tv-bteam.feeder{color:rgba(255,250,240,.4);font-style:italic}
+  .tv-blive-tag{font-family:'Barlow Condensed',sans-serif;font-size:clamp(7px,.8vw,11px);font-weight:700;
+    background:var(--yellow);color:var(--ink);text-align:center;padding:1px;letter-spacing:.04em;text-transform:uppercase}
+
+  @media (max-width:760px){
+    .tv-courts{grid-template-columns:1fr;align-content:start;gap:2vh;overflow-y:auto}
+  }
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -193,6 +344,14 @@
     <span class="kicker">Mesa de Controle · Ao Vivo</span>
     <h1>Torneio de <span class="ball">Futevôlei</span></h1>
     <div class="progress-line" id="progressLine">Carregando…</div>
+    <div class="sync-bar">
+      <span class="sync-status" id="syncStatus">⚪ Offline</span>
+      <input class="sync-room" id="roomInput" placeholder="nome da sala (ex: futevolei2026)" maxlength="40">
+      <button class="mini-btn" id="syncConnectBtn" style="padding:7px 14px">Conectar</button>
+      <label class="sync-mode" title="No telão, deixe marcado para evitar cliques acidentais">
+        <input type="checkbox" id="readOnlyChk"> Só exibição
+      </label>
+    </div>
   </header>
 
   <div class="tabs">
@@ -205,6 +364,9 @@
 
   <!-- CONTROL -->
   <section class="view active" id="control">
+    <div class="top-actions">
+      <button class="mini-btn tv" id="tvBtn">📺 Modo telão</button>
+    </div>
     <div class="courts" id="courts"></div>
     <div class="panel-title"><span class="dot"></span>Próximas na fila</div>
     <p class="panel-note">Assim que uma quadra vaga, a próxima partida pronta entra automaticamente. As que ainda dependem de resultados ficam em espera.</p>
@@ -263,6 +425,44 @@
   </div>
 
 </div>
+
+<!-- ROLETA DE SORTEIO -->
+<div class="draw-overlay" id="drawOverlay">
+  <div class="draw-stage-lbl" id="drawStageLbl">Sorteando…</div>
+  <div class="draw-seednum" id="drawSeedNum">Seed 1</div>
+  <div class="draw-roller" id="drawRoller">—</div>
+  <span class="draw-byetag" id="drawByeTag">★ Bye · entra direto na 2ª rodada</span>
+  <div class="draw-locked" id="drawLocked"></div>
+  <button class="draw-skip" id="drawSkip">Pular animação ⏩</button>
+</div>
+
+<!-- MODO TV / TELÃO -->
+<div class="tv-overlay" id="tvOverlay">
+  <div class="tv-head">
+    <div class="tv-title">🏐 Torneio de <span class="ball">Futevôlei</span></div>
+    <div class="tv-dots">
+      <span class="tv-dot" data-screen="0"></span>
+      <span class="tv-dot" data-screen="1"></span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="tv-close" id="tvFullBtn">⛶ Tela cheia</button>
+      <button class="tv-close" id="tvClose">✕ Sair</button>
+    </div>
+  </div>
+
+  <!-- TELA A: quadras + próximos -->
+  <div class="tv-screen" id="tvScreenCourts">
+    <div class="tv-courts" id="tvCourts"></div>
+    <div class="tv-next" id="tvNext"></div>
+  </div>
+
+  <!-- TELA B: chave completa -->
+  <div class="tv-screen" id="tvScreenBracket" style="display:none">
+    <div class="tv-bracket-scroll" id="tvBracket"></div>
+  </div>
+</div>
+
+<canvas id="confetti"></canvas>
 
 <div class="modal-backdrop" id="modalBackdrop">
   <div class="modal">
@@ -369,19 +569,137 @@ function rebuildBracket(){
 }
 
 const NUM_COURTS = 3;
-const STORE_KEY = 'futevolei_torneio_v2';
+const STORE_KEY = 'futevolei_torneio_v3';
+
+/* ============================================================
+   FIREBASE — sincronização em tempo real (tablet ↔ telão)
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyAZ6TJmlwJMGKCIiof2PTmpEykpulyUQIk",
+  authDomain: "torneio-futevolei-fd22c.firebaseapp.com",
+  databaseURL: "https://torneio-futevolei-fd22c-default-rtdb.firebaseio.com",
+  projectId: "torneio-futevolei-fd22c",
+  storageBucket: "torneio-futevolei-fd22c.firebasestorage.app",
+  messagingSenderId: "1029434511404",
+  appId: "1:1029434511404:web:92d070dd3d869ff91dc189"
+};
+let fbDB=null, fbRoomRef=null, fbReady=false, fbApplyingRemote=false;
+let SYNC = { room:null, readOnly:false, connected:false };
+const SYNC_PREFS_KEY='futevolei_sync_prefs';
+
+function initFirebase(){
+  try{
+    if(typeof firebase==='undefined'){ setSyncStatus('err','SDK não carregou'); return false; }
+    if(!firebase.apps || !firebase.apps.length){ firebase.initializeApp(firebaseConfig); }
+    fbDB = firebase.database();
+    fbReady = true;
+    return true;
+  }catch(e){ console.warn('firebase init fail',e); setSyncStatus('err','Erro de conexão'); return false; }
+}
+function setSyncStatus(kind,msg){
+  const el=document.getElementById('syncStatus'); if(!el) return;
+  el.className='sync-status '+(kind==='on'?'on':kind==='err'?'err':'off');
+  el.textContent=(kind==='on'?'🟢 ':kind==='err'?'🔴 ':'⚪ ')+msg;
+}
+function sanitizeRoom(r){ return (r||'').trim().toLowerCase().replace(/[^a-z0-9_-]/g,'').slice(0,40); }
+
+function connectRoom(room, readOnly){
+  room=sanitizeRoom(room);
+  if(!room){ toast('Digite um nome de sala válido (letras/números).'); return; }
+  if(!fbReady && !initFirebase()){ return; }
+  // desliga listener anterior
+  if(fbRoomRef){ fbRoomRef.off(); fbRoomRef=null; }
+  SYNC.room=room; SYNC.readOnly=!!readOnly;
+  fbRoomRef = fbDB.ref('torneios/'+room);
+  setSyncStatus('off','Conectando…');
+  // primeiro lê o que já existe na sala
+  fbRoomRef.once('value').then(snap=>{
+    const remote=snap.val();
+    if(remote && remote.state){
+      // já existe torneio nessa sala: adota o remoto
+      applyRemoteState(remote.state);
+      toast('🔗 Conectado · dados da sala carregados.');
+    } else if(!SYNC.readOnly){
+      // sala vazia: publica o estado atual (só se puder escrever)
+      pushToFirebase();
+      toast('🔗 Sala criada · sincronizando deste aparelho.');
+    } else {
+      toast('🔗 Conectado (só exibição) · aguardando dados.');
+    }
+    SYNC.connected=true;
+    setSyncStatus('on', (SYNC.readOnly?'Exibindo · ':'Controlando · ')+'sala "'+room+'"');
+    saveSyncPrefs();
+  }).catch(e=>{ console.warn(e); setSyncStatus('err','Falha ao conectar'); });
+
+  // escuta mudanças em tempo real
+  fbRoomRef.on('value', snap=>{
+    const remote=snap.val();
+    if(!remote) return;
+    // evento de sorteio: se for novo, roda a animação da roleta (inclusive no telão)
+    if(remote.drawEvent && remote.drawEvent.id && remote.drawEvent.id!==_lastDrawEventId){
+      _lastDrawEventId = remote.drawEvent.id;
+      const seeds = remote.drawEvent.seeds||[];
+      // só anima se não fui eu quem disparou (quem dispara já está animando)
+      if(remote.drawEvent.origin !== _myClientId){
+        runDrawAnimation(seeds, ()=>{ /* o estado final chega via remote.state */ });
+      }
+    }
+    if(remote.state){ applyRemoteState(remote.state); }
+  }, err=>{ console.warn('listener err',err); setSyncStatus('err','Conexão perdida'); SYNC.connected=false; });
+}
+const _myClientId = 'c'+Math.random().toString(36).slice(2,9);
+let _lastDrawEventId = null;
+function applyRemoteState(rs){
+  // evita loop: marca que estamos aplicando algo vindo do servidor
+  fbApplyingRemote=true;
+  try{
+    state = Object.assign(state, rs);
+    if(!Array.isArray(state.courts)||state.courts.length!==NUM_COURTS) state.courts=[null,null,null];
+    if(!state.courtStart||typeof state.courtStart!=='object') state.courtStart={};
+    if(!Array.isArray(state.byeChoices)) state.byeChoices=[];
+    applySeeds();
+    saveLocal();
+    render();
+  }finally{ fbApplyingRemote=false; }
+}
+function pushToFirebase(){
+  if(!SYNC.connected && !fbRoomRef) return;
+  if(SYNC.readOnly) return;          // telão não escreve
+  if(fbApplyingRemote) return;        // não reescreve o que acabou de chegar
+  if(!fbRoomRef) return;
+  try{
+    // usa update pra não apagar o drawEvent existente
+    fbRoomRef.child('state').set(pickPersisted(state));
+    fbRoomRef.child('updatedAt').set(Date.now());
+  }catch(e){ console.warn('push fail',e); }
+}
+function pushDrawEvent(seeds){
+  if(SYNC.readOnly || !fbRoomRef) return;
+  const id='d'+Date.now();
+  _lastDrawEventId=id; // marca como já visto (sou eu que disparei)
+  try{ fbRoomRef.child('drawEvent').set({ id, seeds, origin:_myClientId, at:Date.now() }); }catch(e){}
+}
+function saveSyncPrefs(){
+  try{ localStorage.setItem(SYNC_PREFS_KEY, JSON.stringify({room:SYNC.room, readOnly:SYNC.readOnly})); }catch(e){}
+}
+function loadSyncPrefs(){
+  try{ const r=localStorage.getItem(SYNC_PREFS_KEY); return r?JSON.parse(r):null; }catch(e){ return null; }
+}
 
 /* ============================================================
    ESTADO
    results: { matchId: {aScore, bScore, winnerSide:'a'|'b'} }
    courts: [ matchId|null, matchId|null, matchId|null ]
    ============================================================ */
-let state = { results:{}, courts:[null,null,null], gf2needed:false, duplas:null, seeds:null };
+let state = { results:{}, courts:[null,null,null], gf2needed:false, duplas:null, seeds:null, drawn:false, byeChoices:[], courtStart:{} };
 
-/* monta TEAMS (seed->nome) a partir de state.seeds (ordem dos seeds) */
+/* monta TEAMS (seed->nome) a partir de state.seeds (ordem dos seeds).
+   Se ainda não foi sorteado (state.drawn=false), TEAMS fica vazio e não há chave. */
 function applySeeds(){
   TEAMS={};
-  (state.seeds||[]).forEach((nome,i)=>{ TEAMS[i+1]=nome; });
+  if(state.drawn && Array.isArray(state.seeds) && state.seeds.length){
+    state.seeds.forEach((nome,i)=>{ TEAMS[i+1]=nome; });
+  }
   rebuildBracket();
 }
 
@@ -395,13 +713,23 @@ function load(){
   if(!Array.isArray(state.duplas) || !state.duplas.length){
     state.duplas = DEFAULT_DUPLAS.slice();
   }
-  // ordem de seeds: usa a salva (sorteio anterior), ou inicia com a ordem das duplas
-  if(!Array.isArray(state.seeds) || !state.seeds.length){
-    state.seeds = state.duplas.slice();
-  }
+  // por padrão começa NÃO sorteado (seeds em branco)
+  if(typeof state.drawn!=='boolean') state.drawn=false;
+  if(!Array.isArray(state.byeChoices)) state.byeChoices=[];
+  if(!state.courtStart||typeof state.courtStart!=='object') state.courtStart={};
+  // limpa byeChoices de duplas que não existem mais
+  state.byeChoices = state.byeChoices.filter(n=>state.duplas.includes(n));
+  if(!state.drawn) state.seeds=null;
   applySeeds();
 }
-function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
+function saveLocal(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
+function pickPersisted(s){
+  return {results:s.results,courts:s.courts,gf2needed:s.gf2needed,duplas:s.duplas,seeds:s.seeds,drawn:s.drawn,byeChoices:s.byeChoices,courtStart:s.courtStart};
+}
+function save(){
+  saveLocal();
+  pushToFirebase();   // se conectado e não for só-exibição, espelha no Firebase
+}
 
 /* ---- resolver competidor -> nome + se está pronto ---- */
 function resolveRef(ref){
@@ -452,6 +780,7 @@ function activeMatches(){
    MOTOR DE ATRIBUIÇÃO AUTOMÁTICA ÀS QUADRAS
    ============================================================ */
 function assignCourts(){
+  if(!state.courtStart) state.courtStart={};
   // tira de quadra qualquer partida que já tenha resultado (segurança)
   state.courts = state.courts.map(id => (id && matchDone(id)) ? null : id);
 
@@ -468,6 +797,7 @@ function assignCourts(){
       const next = candidates.shift();
       state.courts[c] = next.id;
       onCourt.add(next.id);
+      // cronômetro NÃO inicia aqui — só quando o usuário tocar em "Iniciar"
     }
   }
 }
@@ -537,62 +867,106 @@ function resetTorneioState(){
   state.courts = [null,null,null];
   state.gf2needed = false;
 }
+/* volta o torneio pro ponto "antes do sorteio": sem seeds, sem chave */
+function clearDraw(){
+  state.drawn = false;
+  state.seeds = null;
+  resetTorneioState();
+  applySeeds();
+}
+function computeSeeds(){
+  const N=state.duplas.length;
+  const byes=nextPow2(N)-N;
+  const chosen=(state.byeChoices||[]).filter(nome=>state.duplas.includes(nome));
+  // duplas escolhidas pra bye (até o limite de byes); resto sorteado
+  const byeTeams = shuffle(chosen).slice(0, byes);   // se marcou mais que o nº de byes, sorteia entre os marcados
+  const rest = shuffle(state.duplas.filter(n=>!byeTeams.includes(n)));
+  // se faltou bye (marcou menos que o disponível), completa com duplas do resto
+  while(byeTeams.length<byes && rest.length){ byeTeams.push(rest.shift()); }
+  return byeTeams.concat(rest); // primeiras posições = byes
+}
+function applyDrawResult(seeds){
+  state.seeds = seeds;
+  state.drawn = true;
+  resetTorneioState();
+  applySeeds();
+  save(); render();
+}
 function doDraw(){
   if(state.duplas.length<3){ toast('Precisa de pelo menos 3 duplas.'); return; }
-  state.seeds = shuffle(state.duplas);
-  applySeeds();
-  resetTorneioState();
-  save(); render();
-  toast('🎲 Duplas sorteadas! Chave remontada.');
+  const seeds = computeSeeds();
+  document.getElementById('drawOverlay').dataset.pendingSeeds = JSON.stringify(seeds);
+  // avisa o telão (e outros aparelhos da sala) pra rodarem a mesma roleta
+  pushDrawEvent(seeds);
+  // dispara animação de roleta local; ao terminar, aplica o resultado e sincroniza
+  runDrawAnimation(seeds, ()=>{
+    applyDrawResult(seeds);
+    fireConfetti(1800);
+    toast('🎲 Duplas sorteadas! Chave montada.');
+  });
 }
 
-/* adicionar / editar / excluir duplas */
+/* adicionar / editar / excluir duplas — mexem só na lista; não sorteiam */
 function addDupla(nome){
   nome=(nome||'').trim();
   if(!nome){ toast('Digite o nome da dupla.'); return false; }
   state.duplas.push(nome);
-  // mantém seeds em sincronia com duplas (sem sortear ainda)
-  state.seeds = state.duplas.slice();
-  resetTorneioState();
-  applySeeds(); save(); render();
+  clearDraw(); save(); render();
   toast('➕ Dupla adicionada.');
   return true;
 }
 function editDupla(idx, nome){
   nome=(nome||'').trim(); if(!nome){ toast('Nome vazio.'); return; }
   state.duplas[idx]=nome;
-  state.seeds = state.duplas.slice();
-  resetTorneioState();
-  applySeeds(); save(); render();
+  clearDraw(); save(); render();
   toast('✏️ Dupla editada.');
 }
 function removeDupla(idx){
   const nome=state.duplas[idx];
-  askConfirm(`Excluir a dupla "${nome}"? A chave será remontada.`,()=>{
+  askConfirm(`Excluir a dupla "${nome}"?`,()=>{
     state.duplas.splice(idx,1);
-    state.seeds = state.duplas.slice();
-    resetTorneioState();
-    applySeeds(); save(); render();
+    state.byeChoices=(state.byeChoices||[]).filter(n=>n!==nome);
+    clearDraw(); save(); render();
     toast('🗑️ Dupla removida.');
   });
+}
+function toggleBye(idx, checked){
+  const nome=state.duplas[idx];
+  if(!Array.isArray(state.byeChoices)) state.byeChoices=[];
+  if(checked){ if(!state.byeChoices.includes(nome)) state.byeChoices.push(nome); }
+  else { state.byeChoices=state.byeChoices.filter(n=>n!==nome); }
+  // marcar bye não remonta a chave (só afeta o próximo sorteio); mas se já sorteado, avisa
+  if(state.drawn){ clearDraw(); }
+  save(); render();
 }
 
 function renderDrawSeeds(){
   // lista de gestão de duplas
   const mgr = document.getElementById('duplasMgr');
   if(mgr){
-    mgr.innerHTML = state.duplas.map((nome,i)=>`
-      <div class="dupla-row">
+    const N=state.duplas.length;
+    const byes=N>=3?(nextPow2(N)-N):0;
+    const chosenCount=(state.byeChoices||[]).length;
+    mgr.innerHTML = state.duplas.map((nome,i)=>{
+      const checked=(state.byeChoices||[]).includes(nome)?'checked':'';
+      return `<div class="dupla-row">
         <span class="dupla-idx">${i+1}</span>
         <input class="dupla-input" value="${nome.replace(/"/g,'&quot;')}" data-idx="${i}">
+        <label class="bye-check" title="Marcar para dar bye a esta dupla">
+          <input type="checkbox" data-bye="${i}" ${checked} ${byes===0?'disabled':''}>
+          <span>Bye</span>
+        </label>
         <button class="dupla-del" data-del="${i}" title="Excluir">✕</button>
-      </div>`).join('');
-    // listeners
+      </div>`;
+    }).join('');
     mgr.querySelectorAll('.dupla-input').forEach(inp=>{
       inp.addEventListener('change',e=>editDupla(+e.target.dataset.idx, e.target.value));
     });
     mgr.querySelectorAll('.dupla-del').forEach(b=>{
       b.addEventListener('click',e=>removeDupla(+e.target.dataset.del));
+    });
+    mgr.querySelectorAll('[data-bye]').forEach(cb=>{
+      cb.addEventListener('change',e=>toggleBye(+e.target.dataset.bye, e.target.checked));
     });
   }
   // info de byes
@@ -602,21 +976,31 @@ function renderDrawSeeds(){
     if(N<3){ info.textContent='Adicione pelo menos 3 duplas para gerar a chave.'; }
     else{
       const size=nextPow2(N), byes=size-N;
-      info.innerHTML = `<strong>${N} duplas</strong> · chave tamanho ${size} · <strong>${byes} bye${byes===1?'':'s'}</strong> (seed${byes===1?'':'s'} ${byes? '1'+(byes>1?'–'+byes:''):'—'} entra${byes===1?'':'m'} direto na 2ª rodada)`;
+      const chosen=(state.byeChoices||[]).length;
+      let extra='';
+      if(byes===0) extra=' · nenhum bye nesta quantidade de duplas';
+      else if(chosen===0) extra=` · marque até ${byes} dupla${byes===1?'':'s'} pra bye, ou deixe no sorteio`;
+      else if(chosen<=byes) extra=` · ${chosen} dupla${chosen===1?'':'s'} marcada${chosen===1?'':'s'} pra bye${chosen<byes?` (faltam ${byes-chosen} no sorteio)`:''}`;
+      else extra=` · ⚠️ ${chosen} marcadas, mas só há ${byes} bye${byes===1?'':'s'} — serão sorteadas entre as marcadas`;
+      info.innerHTML = `<strong>${N} duplas</strong> · chave ${size} · <strong>${byes} bye${byes===1?'':'s'}</strong>${extra}`;
     }
   }
   // seeds atuais
   const wrap = document.getElementById('drawSeeds');
   if(wrap){
-    const byes = BRACKET_INFO.byes||0;
-    wrap.innerHTML = Object.keys(TEAMS).map(n=>{
-      const isBye = (+n)<=byes;
-      return `<div style="display:flex;align-items:center;gap:9px;font-size:14px;font-weight:500">
-        <span style="flex:none;width:24px;height:24px;border-radius:50%;background:${isBye?'var(--orange)':'var(--teal)'};color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;display:grid;place-items:center">${n}</span>
-        <span>${TEAMS[n]}</span>
-        ${isBye?'<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;font-weight:700;background:var(--orange);color:#fff;padding:1px 6px;border-radius:3px;letter-spacing:.08em">Bye</span>':''}
-      </div>`;
-    }).join('');
+    if(!state.drawn){
+      wrap.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#b39b6e;font-family:'Barlow Condensed',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.08em;padding:8px 4px">Sorteio ainda não realizado.<br>Clique em "Sortear duplas agora" para definir os seeds.</div>`;
+    } else {
+      const byes = BRACKET_INFO.byes||0;
+      wrap.innerHTML = Object.keys(TEAMS).map(n=>{
+        const isBye = (+n)<=byes;
+        return `<div style="display:flex;align-items:center;gap:9px;font-size:14px;font-weight:500">
+          <span style="flex:none;width:24px;height:24px;border-radius:50%;background:${isBye?'var(--orange)':'var(--teal)'};color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;display:grid;place-items:center">${n}</span>
+          <span>${TEAMS[n]}</span>
+          ${isBye?'<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;font-weight:700;background:var(--orange);color:#fff;padding:1px 6px;border-radius:3px;letter-spacing:.08em">Bye</span>':''}
+        </div>`;
+      }).join('');
+    }
   }
 }
 
@@ -632,14 +1016,24 @@ function render(){
   renderStandings();
   renderDrawSeeds();
   renderProgress();
-  save();
+  renderTV();
+  tickTimers();
+  checkChampionCelebration();
+  saveLocal();   // persiste local a cada render; o push ao Firebase ocorre nas mutações (save())
+}
+let _lastChamp=null;
+function checkChampionCelebration(){
+  const c=getChampion();
+  if(c && c!==_lastChamp){ _lastChamp=c; fireConfetti(4000); }
+  if(!c) _lastChamp=null;
 }
 
 function renderProgress(){
+  const el = document.getElementById('progressLine');
+  if(!state.drawn){ el.innerHTML = `Aguardando sorteio · ${state.duplas.length} duplas inscritas`; return; }
   const total = activeMatches().length;
   const done = activeMatches().filter(m=>matchDone(m.id)).length;
   const champ = getChampion();
-  const el = document.getElementById('progressLine');
   if(champ){ el.innerHTML = `🏆 Campeão: ${champ}`; }
   else el.textContent = `${done} de ${total} jogos concluídos`;
 }
@@ -649,6 +1043,14 @@ function netIcon(){return '🏐';}
 function renderCourts(){
   const wrap = document.getElementById('courts');
   wrap.innerHTML='';
+  if(!state.drawn){
+    wrap.innerHTML = `<div style="grid-column:1/-1;background:var(--paper);border:2.5px dashed var(--line);border-radius:10px;padding:30px 20px;text-align:center">
+      <div style="font-family:'Anton',sans-serif;font-size:22px;color:var(--orange-deep);margin-bottom:8px">🎲 Torneio aguardando sorteio</div>
+      <div style="color:#6b5530;font-weight:500;font-size:14px;line-height:1.4">Vá na aba <strong>🎲 Duplas &amp; Sorteio</strong>, confira a lista de duplas e clique em <strong>"Sortear duplas agora"</strong> para montar a chave e liberar as quadras.</div>
+      <button class="btn" onclick="switchView('draw')" style="width:auto;margin-top:16px;background:var(--orange);color:#fff;border-color:var(--orange-deep);box-shadow:3px 3px 0 var(--orange-deep);padding:11px 24px">Ir para o sorteio →</button>
+    </div>`;
+    return;
+  }
   for(let i=0;i<NUM_COURTS;i++){
     const mid = state.courts[i];
     const div = document.createElement('div');
@@ -660,8 +1062,15 @@ function renderCourts(){
     } else {
       const m = MATCH_BY_ID[mid];
       const A = resolveRef(m.a), B = resolveRef(m.b);
+      const started = state.courtStart && state.courtStart[mid];
+      const headTimer = started
+        ? `<span class="court-timer"><span class="dotpulse"></span><span id="timer_${i}"></span></span>`
+        : `<span class="court-timer" style="opacity:.6">⏱ --:--</span>`;
+      const startBtn = started
+        ? `<button class="btn btn-timer-reset" onclick="resetCourtTimer('${mid}')">↺ Reiniciar cronômetro</button>`
+        : `<button class="btn btn-timer-start" onclick="startCourtTimer('${mid}')">▶ Iniciar cronômetro</button>`;
       div.innerHTML = `
-        <div class="court-head"><span class="ct">Quadra ${i+1}</span><span class="net">${netIcon()}</span></div>
+        <div class="court-head"><span class="ct">Quadra ${i+1}</span>${headTimer}</div>
         <div class="court-body">
           <div class="gcode">${m.id==='GF'?'GRANDE FINAL':m.id==='GF2'?'FINAL RESET':m.id}</div>
           <div class="phase-tag">${m.phase}</div>
@@ -674,6 +1083,7 @@ function renderCourts(){
             <span class="team-name">${B.name}</span>
             <input class="score-input" type="number" inputmode="numeric" min="0" id="sb_${mid}" placeholder="0">
           </div>
+          ${startBtn}
           <button class="btn btn-confirm" onclick="confirmCourt('${mid}')">Registrar resultado</button>
         </div>`;
     }
@@ -687,6 +1097,19 @@ window.confirmCourt = function(mid){
   if(isNaN(a)||isNaN(b)){ toast('Preencha os dois placares.'); return; }
   if(a<0||b<0){ toast('Placar inválido.'); return; }
   submitResult(mid,a,b);
+};
+
+window.startCourtTimer = function(mid){
+  if(!state.courtStart) state.courtStart={};
+  state.courtStart[mid]=Date.now();
+  save(); render(); toast('⏱ Cronômetro iniciado.');
+};
+window.resetCourtTimer = function(mid){
+  askConfirm('Reiniciar o cronômetro desta partida do zero?',()=>{
+    if(!state.courtStart) state.courtStart={};
+    state.courtStart[mid]=Date.now();
+    save(); render(); toast('↺ Cronômetro reiniciado.');
+  });
 };
 
 function renderNextPreview(){
@@ -814,6 +1237,7 @@ function switchView(v){
   document.querySelectorAll('.view').forEach(s=>s.classList.toggle('active',s.id===v));
   window.scrollTo({top:0,behavior:'smooth'});
 }
+window.switchView = switchView;
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchView(t.dataset.view)));
 
 let toastTimer;
@@ -841,9 +1265,8 @@ document.getElementById('modalBackdrop').addEventListener('click',e=>{
 });
 
 document.getElementById('resetBtn').addEventListener('click',()=>{
-  askConfirm('Zerar os placares do torneio? As duplas e o sorteio atual serão mantidos.',()=>{
-    resetTorneioState();
-    save(); render(); toast('Placares zerados.'); switchView('control');
+  askConfirm('Zerar o torneio? Os placares serão apagados e o sorteio será desfeito (seeds em branco). As duplas continuam na lista.',()=>{
+    clearDraw(); save(); render(); toast('Torneio zerado · pronto pra sortear.'); switchView('draw');
   });
 });
 
@@ -865,10 +1288,376 @@ document.getElementById('newDupla').addEventListener('keydown',e=>{
 });
 
 /* ============================================================
+   CONFETE (canvas)
+   ============================================================ */
+const confettiCanvas = document.getElementById('confetti');
+const cctx = confettiCanvas.getContext('2d');
+let confettiParts = [], confettiRAF = null;
+function sizeConfetti(){ confettiCanvas.width=innerWidth; confettiCanvas.height=innerHeight; }
+sizeConfetti(); window.addEventListener('resize', sizeConfetti);
+function fireConfetti(durationMs){
+  const colors=['#ff5e1a','#ffc23d','#06857a','#fffaf0','#e0440a'];
+  const N=Math.min(180, Math.round(innerWidth/6));
+  for(let i=0;i<N;i++){
+    confettiParts.push({
+      x:Math.random()*innerWidth, y:-20-Math.random()*innerHeight*0.3,
+      vx:(Math.random()-0.5)*3, vy:2+Math.random()*4,
+      size:6+Math.random()*7, rot:Math.random()*Math.PI, vr:(Math.random()-0.5)*0.3,
+      color:colors[Math.floor(Math.random()*colors.length)], shape:Math.random()<0.5?'r':'c'
+    });
+  }
+  const stopAt = Date.now()+(durationMs||2000);
+  if(confettiRAF) return; // já rodando
+  (function loop(){
+    cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+    confettiParts.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy; p.vy+=0.04; p.rot+=p.vr;
+      cctx.save(); cctx.translate(p.x,p.y); cctx.rotate(p.rot); cctx.fillStyle=p.color;
+      if(p.shape==='r') cctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6);
+      else { cctx.beginPath(); cctx.arc(0,0,p.size/2,0,Math.PI*2); cctx.fill(); }
+      cctx.restore();
+    });
+    confettiParts = confettiParts.filter(p=>p.y<confettiCanvas.height+30);
+    if(Date.now()<stopAt || confettiParts.length){ confettiRAF=requestAnimationFrame(loop); }
+    else { cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height); confettiRAF=null; }
+  })();
+}
+
+/* ============================================================
+   ROLETA DE SORTEIO (revela seed por seed)
+   ============================================================ */
+let drawAnimTimers=[];
+function clearDrawTimers(){ drawAnimTimers.forEach(t=>clearTimeout(t)); drawAnimTimers=[]; }
+function runDrawAnimation(seeds, onDone){
+  const ov=document.getElementById('drawOverlay');
+  const roller=document.getElementById('drawRoller');
+  const seedNum=document.getElementById('drawSeedNum');
+  const byeTag=document.getElementById('drawByeTag');
+  const locked=document.getElementById('drawLocked');
+  const stageLbl=document.getElementById('drawStageLbl');
+  const N=seeds.length, byes=nextPow2(N)-N;
+  locked.innerHTML=''; ov.classList.add('show'); stageLbl.textContent='Sorteando as duplas…';
+  clearDrawTimers();
+
+  let i=0;
+  const allNames=seeds.slice();
+  function revealSeed(idx){
+    if(idx>=N){
+      // fim
+      stageLbl.textContent='✅ Sorteio concluído!';
+      seedNum.textContent=''; roller.textContent=''; byeTag.classList.remove('show');
+      fireConfetti(1500);
+      const t=setTimeout(()=>{ ov.classList.remove('show'); onDone&&onDone(); }, 1400);
+      drawAnimTimers.push(t);
+      return;
+    }
+    const isBye=(idx+1)<=byes;
+    seedNum.textContent='Seed '+(idx+1)+(isBye?' · BYE':'');
+    byeTag.classList.remove('show');
+    roller.classList.toggle('bye', isBye);
+    // fase de embaralhamento rápido
+    let spins=0; const spinsTotal=12+Math.floor(Math.random()*6);
+    function spin(){
+      roller.textContent = allNames[Math.floor(Math.random()*allNames.length)];
+      roller.style.transform='scale('+(0.96+Math.random()*0.08)+')';
+      spins++;
+      if(spins<spinsTotal){
+        const t=setTimeout(spin, 60+spins*8); drawAnimTimers.push(t);
+      } else {
+        // trava no nome certo
+        roller.textContent=seeds[idx]; roller.style.transform='scale(1.08)';
+        if(isBye) byeTag.classList.add('show');
+        const li=document.createElement('div');
+        li.className='draw-locked-item'+(isBye?' bye':'');
+        li.innerHTML='<span class="dn">'+(idx+1)+'</span><span>'+seeds[idx]+'</span>'+(isBye?'<span style="margin-left:auto;font-size:11px;color:var(--yellow)">★ BYE</span>':'');
+        locked.appendChild(li);
+        const t=setTimeout(()=>{ roller.style.transform='scale(1)'; revealSeed(idx+1); }, 700);
+        drawAnimTimers.push(t);
+      }
+    }
+    spin();
+  }
+  revealSeed(0);
+}
+document.getElementById('drawSkip').addEventListener('click',()=>{
+  // pula: encerra animação e aplica direto
+  clearDrawTimers();
+  document.getElementById('drawOverlay').classList.remove('show');
+  // recupera os seeds em curso da última animação via closure não é trivial;
+  // então refazemos: o doDraw guarda os seeds no dataset do overlay
+  const pend=document.getElementById('drawOverlay').dataset.pendingSeeds;
+  if(pend){ applyDrawResult(JSON.parse(pend)); fireConfetti(1200); toast('🎲 Sorteado!'); }
+});
+
+/* ============================================================
+   CRONÔMETRO POR QUADRA
+   ============================================================ */
+function fmtDur(ms){
+  const s=Math.floor(ms/1000), m=Math.floor(s/60), ss=s%60;
+  return m+':'+String(ss).padStart(2,'0');
+}
+function tickTimers(){
+  if(!state.courtStart) state.courtStart={};
+  for(let i=0;i<NUM_COURTS;i++){
+    const mid=state.courts[i];
+    const el=document.getElementById('timer_'+i);
+    if(el){
+      if(mid && state.courtStart[mid]){
+        el.textContent='⏱ '+fmtDur(Date.now()-state.courtStart[mid]);
+      } else el.textContent='';
+    }
+    // TV
+    const tvEl=document.getElementById('tvtimer_'+i);
+    if(tvEl && mid && state.courtStart[mid]) tvEl.textContent='⏱ '+fmtDur(Date.now()-state.courtStart[mid]);
+    else if(tvEl) tvEl.textContent='';
+  }
+}
+setInterval(tickTimers, 1000);
+
+/* ============================================================
+   MODO TV / TELÃO — alterna entre [quadras+próximos] e [chave]
+   ============================================================ */
+let tvScreen=0;          // 0 = quadras, 1 = chave
+let tvRotateTimer=null;
+
+function renderTV(){
+  const ov=document.getElementById('tvOverlay');
+  if(!ov.classList.contains('show')) return;
+  // mostra a tela ativa
+  document.getElementById('tvScreenCourts').style.display = tvScreen===0?'flex':'none';
+  document.getElementById('tvScreenBracket').style.display = tvScreen===1?'flex':'none';
+  document.querySelectorAll('.tv-dot').forEach(d=>d.classList.toggle('on', +d.dataset.screen===tvScreen));
+  if(tvScreen===0) renderTVCourts();
+  else renderTVBracket();
+}
+
+function renderTVCourts(){
+  const wrap=document.getElementById('tvCourts');
+  let html='';
+  for(let i=0;i<NUM_COURTS;i++){
+    const mid=state.courts[i];
+    if(!mid){
+      html+=`<div class="tv-court"><div class="tv-court-num">Quadra ${i+1}</div><div class="tv-free">Livre</div></div>`;
+    } else {
+      const m=MATCH_BY_ID[mid]; const A=resolveRef(m.a),B=resolveRef(m.b);
+      html+=`<div class="tv-court">
+        <div class="tv-court-num"><span>Quadra ${i+1}</span><span class="tmr" id="tvtimer_${i}"></span></div>
+        <div class="tv-team">${A.name}</div>
+        <div class="tv-vs">VS</div>
+        <div class="tv-team">${B.name}</div>
+        <div class="tv-phase">${m.id==='GF'?'GRANDE FINAL':m.id==='GF2'?'FINAL RESET':m.phase}</div>
+      </div>`;
+    }
+  }
+  wrap.innerHTML=html;
+  const onCourt=new Set(state.courts.filter(Boolean));
+  const next=activeMatches().filter(m=>!matchDone(m.id)&&!onCourt.has(m.id)&&resolveRef(m.a).ready&&resolveRef(m.b).ready).slice(0,5);
+  const champ=getChampion();
+  const nx=document.getElementById('tvNext');
+  if(champ){ nx.innerHTML=`<div class="tv-next-lbl">🏆 Campeão</div><div class="tv-next-item" style="font-size:clamp(20px,3vw,38px);color:var(--yellow)">${champ}</div>`; }
+  else if(next.length){
+    nx.innerHTML=`<div class="tv-next-lbl">A seguir</div>`+next.map(m=>`<span class="tv-next-item">${resolveRef(m.a).name} × ${resolveRef(m.b).name}</span>`).join('');
+  } else nx.innerHTML='';
+}
+
+/* chave completa no telão, em FAIXAS (Vencedores / Repescagem / Final),
+   cada faixa com colunas de fase que se ajustam à largura — cabe tudo sem rolar */
+function renderTVBracket(){
+  const wrap=document.getElementById('tvBracket');
+  if(!MATCH_DEFS.length){ wrap.innerHTML='<div class="tv-free" style="margin:auto">Aguardando sorteio…</div>'; return; }
+  const onCourt=new Set(state.courts.filter(Boolean));
+
+  // agrupa por (bracket, phase) preservando ordem
+  const groups=[]; const idx={};
+  MATCH_DEFS.forEach(m=>{
+    if(m.id==='GF2' && !gf2Active()) return;
+    const key=m.bracket+'|'+m.phase;
+    if(!(key in idx)){ idx[key]=groups.length; groups.push({bracket:m.bracket, phase:m.phase, matches:[]}); }
+    groups[idx[key]].matches.push(m);
+  });
+
+  const matchHTML=(m)=>{
+    const A=resolveRef(m.a),B=resolveRef(m.b);
+    const done=matchDone(m.id);
+    const live=onCourt.has(m.id);
+    const r=done?state.results[m.id]:null;
+    const aWin=done&&r.winnerSide==='a', bWin=done&&r.winnerSide==='b';
+    const row=(ref,resolved,isWin,isOut)=>{
+      const cls=resolved.ready?(isWin?'win':(isOut?'out':'')):'feeder';
+      const sc=done?`<span class="sc">${ref==='a'?r.aScore:r.bScore}</span>`:'';
+      return `<div class="tv-bteam ${cls}"><span>${resolved.name}</span>${sc}</div>`;
+    };
+    return `<div class="tv-bmatch ${live?'live':''}">${live?'<div class="tv-blive-tag">● Em quadra</div>':''}${row('a',A,aWin,bWin)}${row('b',B,bWin,aWin)}</div>`;
+  };
+
+  // monta uma faixa para um conjunto de grupos
+  const bandHTML=(title, cls, grps)=>{
+    if(!grps.length) return '';
+    let cols='';
+    grps.forEach(g=>{
+      const colCls=g.bracket==='GF'?'gf':cls;
+      const short=g.phase.replace('Vencedores · ','').replace('Repescagem · ','').replace('Rodada','R').replace('(Vencedores)','');
+      cols+=`<div class="tv-bcol"><div class="tv-bcol-lbl ${colCls}">${short}</div>${g.matches.map(matchHTML).join('')}</div>`;
+    });
+    return `<div class="tv-band"><div class="tv-band-title"><span class="pill ${cls}"></span>${title}</div><div class="tv-band-cols">${cols}</div></div>`;
+  };
+
+  const wb=groups.filter(g=>g.bracket==='WB');
+  const lb=groups.filter(g=>g.bracket==='LB');
+  const gf=groups.filter(g=>g.bracket==='GF');
+  // Final entra junto da faixa de vencedores (mesma linha) pra economizar altura
+  wrap.innerHTML =
+    bandHTML('Chave de Vencedores'+(gf.length?' + Final':''), 'wb', wb.concat(gf.map(g=>({...g,bracket:'GF'})))) +
+    bandHTML('Repescagem', 'lb', lb);
+  // ajusta a cor do rótulo da final (fica como wb na faixa, então marcamos a coluna GF)
+}
+
+function startTvRotate(){
+  stopTvRotate();
+  tvRotateTimer=setInterval(()=>{
+    tvScreen = tvScreen===0?1:0;
+    renderTV();
+  }, 15000); // alterna a cada 15s
+}
+function stopTvRotate(){ if(tvRotateTimer){ clearInterval(tvRotateTimer); tvRotateTimer=null; } }
+
+document.getElementById('tvBtn').addEventListener('click',()=>{
+  if(!state.drawn){ toast('Sorteie as duplas primeiro.'); return; }
+  tvScreen=0;
+  document.getElementById('tvOverlay').classList.add('show');
+  renderTV();
+  startTvAutoRefresh();
+  startTvRotate();
+  if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
+});
+document.getElementById('tvClose').addEventListener('click',()=>{
+  document.getElementById('tvOverlay').classList.remove('show');
+  stopTvAutoRefresh();
+  stopTvRotate();
+  if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+});
+// botão tela cheia (precisa vir de um clique direto pra o navegador permitir)
+const tvFullBtn=document.getElementById('tvFullBtn');
+if(tvFullBtn) tvFullBtn.addEventListener('click',()=>{
+  if(!document.fullscreenElement){
+    const el=document.getElementById('tvOverlay');
+    const req=el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen;
+    if(req){ req.call(el).then(()=>{tvFullBtn.textContent='⛶ Sair tela cheia';}).catch(()=>toast('Tela cheia bloqueada pelo navegador.')); }
+  } else {
+    (document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen).call(document);
+    tvFullBtn.textContent='⛶ Tela cheia';
+  }
+});
+document.addEventListener('fullscreenchange',()=>{
+  if(tvFullBtn) tvFullBtn.textContent=document.fullscreenElement?'⛶ Sair tela cheia':'⛶ Tela cheia';
+});
+// tocar nos dots troca de tela manualmente
+document.querySelectorAll('.tv-dot').forEach(d=>{
+  d.addEventListener('click',()=>{ tvScreen=+d.dataset.screen; renderTV(); startTvRotate(); });
+});
+
+/* ---- AUTO-REFRESH DO TELÃO (fallback local) ---- */
+let tvRefreshTimer=null;
+function reloadStateFromStorage(){
+  try{
+    const raw=localStorage.getItem(STORE_KEY);
+    if(raw){
+      const p=JSON.parse(raw);
+      if(JSON.stringify(p)!==JSON.stringify(pickPersisted(state))){
+        state=Object.assign(state,p);
+        applySeeds();
+        return true;
+      }
+    }
+  }catch(e){}
+  return false;
+}
+function startTvAutoRefresh(){
+  stopTvAutoRefresh();
+  tvRefreshTimer=setInterval(()=>{
+    const changed=reloadStateFromStorage();
+    renderTV();
+    if(changed){ assignCourts(); renderCourts(); }
+  }, 4000);
+}
+function stopTvAutoRefresh(){ if(tvRefreshTimer){ clearInterval(tvRefreshTimer); tvRefreshTimer=null; } }
+// quando OUTRA aba/janela do mesmo navegador salva, atualiza na hora
+window.addEventListener('storage',e=>{
+  if(e.key===STORE_KEY){
+    reloadStateFromStorage();
+    if(document.getElementById('tvOverlay').classList.contains('show')) renderTV();
+    else render();
+  }
+});
+
+/* ============================================================
+   COMPARTILHAR NO WHATSAPP
+   ============================================================ */
+function buildShareText(){
+  let t='🏐 *TORNEIO DE FUTEVÔLEI*\n';
+  if(!state.drawn){ return t+'\n_Sorteio ainda não realizado._'; }
+  const champ=getChampion();
+  if(champ) t+='🏆 *CAMPEÃO: '+champ+'*\n';
+  t+='\n*Jogos nas quadras agora:*\n';
+  let any=false;
+  for(let i=0;i<NUM_COURTS;i++){
+    const mid=state.courts[i];
+    if(mid){ const m=MATCH_BY_ID[mid]; t+=`Quadra ${i+1}: ${resolveRef(m.a).name} × ${resolveRef(m.b).name}\n`; any=true; }
+  }
+  if(!any) t+='—\n';
+  // últimos resultados
+  const done=activeMatches().filter(m=>matchDone(m.id)).sort((a,b)=>b.order-a.order).slice(0,6);
+  if(done.length){
+    t+='\n*Últimos resultados:*\n';
+    done.forEach(m=>{ const r=state.results[m.id];
+      t+=`${winnerName(m.id)} ${Math.max(r.aScore,r.bScore)}×${Math.min(r.aScore,r.bScore)} ${loserName(m.id)}\n`; });
+  }
+  // contagem
+  const total=activeMatches().length, feitos=activeMatches().filter(m=>matchDone(m.id)).length;
+  t+=`\n_${feitos}/${total} jogos concluídos_`;
+  return t;
+}
+const _waBtn=document.getElementById('waBtn');
+if(_waBtn) _waBtn.addEventListener('click',()=>{
+  const txt=encodeURIComponent(buildShareText());
+  window.open('https://wa.me/?text='+txt, '_blank');
+});
+
+/* ============================================================
+   CONTROLES DE SINCRONIZAÇÃO (UI)
+   ============================================================ */
+document.getElementById('syncConnectBtn').addEventListener('click',()=>{
+  const room=document.getElementById('roomInput').value;
+  const ro=document.getElementById('readOnlyChk').checked;
+  connectRoom(room, ro);
+});
+document.getElementById('roomInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){ connectRoom(e.target.value, document.getElementById('readOnlyChk').checked); }
+});
+document.getElementById('readOnlyChk').addEventListener('change',e=>{
+  SYNC.readOnly=e.target.checked; saveSyncPrefs();
+  if(SYNC.connected) setSyncStatus('on',(SYNC.readOnly?'Exibindo · ':'Controlando · ')+'sala "'+SYNC.room+'"');
+});
+
+/* ============================================================
    INIT
    ============================================================ */
 load();
 render();
+if(!state.drawn) switchView('draw');
+
+// reconecta à última sala usada (se houver)
+(function reconnectSync(){
+  const prefs=loadSyncPrefs();
+  if(prefs && prefs.room){
+    document.getElementById('roomInput').value=prefs.room;
+    document.getElementById('readOnlyChk').checked=!!prefs.readOnly;
+    initFirebase();
+    connectRoom(prefs.room, prefs.readOnly);
+  } else {
+    setSyncStatus('off','Offline · sem sala');
+  }
+})();
 </script>
 </body>
 </html>
