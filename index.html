@@ -17,6 +17,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html{scroll-behavior:smooth}
+  html.tv-open, body.tv-open{overflow:hidden!important;height:100%}
   body{
     font-family:'Barlow',sans-serif;color:var(--ink);min-height:100vh;
     background:
@@ -276,7 +277,18 @@
   .tv-close:hover{border-color:#fff;background:rgba(255,255,255,.1)}
   .tv-courts{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:2vw;align-content:center}
   .tv-court{background:rgba(255,250,240,.04);border:2px solid rgba(255,250,240,.15);border-radius:16px;
-    padding:3vh 2vw;display:flex;flex-direction:column}
+    padding:3vh 2vw;display:flex;flex-direction:column;position:relative;transition:border-color .3s}
+  .tv-court.waiting{border-color:var(--orange);background:rgba(255,94,26,.08);
+    animation:courtPulse 1.6s ease-in-out infinite}
+  @keyframes courtPulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(255,94,26,.55);border-color:var(--orange)}
+    50%{box-shadow:0 0 28px 6px rgba(255,94,26,.5);border-color:var(--yellow)}
+  }
+  .tv-call{position:absolute;top:-1.4vh;left:50%;transform:translateX(-50%);
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+    font-size:clamp(11px,1.3vw,17px);background:var(--orange);color:#fff;padding:.5vh 1.4vw;border-radius:20px;
+    white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+  .tv-court-num .tmr.waiting,.tv-court.waiting .tmr{color:var(--orange)}
   .tv-court-num{font-family:'Anton',sans-serif;font-size:clamp(18px,2.5vw,30px);color:var(--yellow);
     text-transform:uppercase;margin-bottom:1.5vh;display:flex;justify-content:space-between;align-items:center}
   .tv-court-num .tmr{font-size:clamp(14px,1.8vw,22px);color:#7CFF9B;font-family:'Barlow Condensed',sans-serif}
@@ -304,11 +316,12 @@
   /* chave do telão — cabe tudo na tela, sem rolagem.
      Dividida em faixas (vencedores / repescagem / final), cada faixa com colunas que
      se ajustam à largura. Tamanhos em vmin/cqw para encolher conforme o conteúdo. */
-  .tv-bracket-scroll{flex:1;display:flex;flex-direction:column;gap:.8vh;min-height:0;overflow:hidden}
+  .tv-bracket-scroll{flex:1;display:flex;flex-direction:column;gap:1.4vh;min-height:0;overflow:hidden}
   .tv-band{display:flex;flex-direction:column;min-height:0;flex:1 1 0}
   .tv-band-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;
-    letter-spacing:.12em;font-size:clamp(11px,1.4vh,18px);margin-bottom:.4vh;display:flex;align-items:center;gap:8px}
-  .tv-band-title .pill{width:12px;height:12px;border-radius:3px}
+    letter-spacing:.12em;font-size:clamp(12px,1.5vh,20px);margin-bottom:.8vh;color:#fff;
+    display:flex;align-items:center;gap:8px}
+  .tv-band-title .pill{width:14px;height:14px;border-radius:3px;flex:none}
   .tv-band-title .pill.wb{background:var(--teal)} .tv-band-title .pill.lb{background:var(--lose)} .tv-band-title .pill.gf{background:var(--orange-deep)}
   .tv-band-cols{flex:1;display:flex;gap:.6vw;min-height:0;align-items:stretch}
   .tv-bcol{flex:1 1 0;min-width:0;display:flex;flex-direction:column;justify-content:space-evenly;gap:.5vh}
@@ -316,12 +329,12 @@
     letter-spacing:.04em;font-size:clamp(8px,.95vw,14px);color:#fff;text-align:center;padding:.3vh;
     border-radius:5px;margin-bottom:.3vh;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .tv-bcol-lbl.wb{background:var(--teal)} .tv-bcol-lbl.lb{background:var(--lose)} .tv-bcol-lbl.gf{background:var(--orange-deep)}
-  .tv-bmatch{background:rgba(255,250,240,.05);border:1px solid rgba(255,250,240,.14);border-radius:6px;overflow:hidden}
+  .tv-bmatch{background:rgba(255,250,240,.05);border:1px solid rgba(255,250,240,.14);border-radius:6px}
   .tv-bmatch.live{border-color:var(--yellow);box-shadow:0 0 0 2px rgba(255,194,61,.4)}
   .tv-bteam{font-family:'Barlow Condensed',sans-serif;font-weight:600;color:#fff;
-    font-size:clamp(8px,.95vw,15px);padding:.35vh .4vw;line-height:1.1;display:flex;justify-content:space-between;gap:4px;
-    border-bottom:1px solid rgba(255,250,240,.1);white-space:nowrap;overflow:hidden}
-  .tv-bteam span:first-child{overflow:hidden;text-overflow:ellipsis}
+    font-size:clamp(9px,1vw,16px);padding:.35vh .45vw;line-height:1.05;display:flex;justify-content:space-between;gap:4px;
+    border-bottom:1px solid rgba(255,250,240,.1)}
+  .tv-bteam span:first-child{min-width:0;word-break:break-word}
   .tv-bteam:last-child{border-bottom:none}
   .tv-bteam.win{color:#7CFF9B;font-weight:700}
   .tv-bteam.out{color:rgba(255,250,240,.35);text-decoration:line-through}
@@ -1408,8 +1421,11 @@ function tickTimers(){
     }
     // TV
     const tvEl=document.getElementById('tvtimer_'+i);
-    if(tvEl && mid && state.courtStart[mid]) tvEl.textContent='⏱ '+fmtDur(Date.now()-state.courtStart[mid]);
-    else if(tvEl) tvEl.textContent='';
+    if(tvEl){
+      if(mid && state.courtStart[mid]) tvEl.textContent='⏱ '+fmtDur(Date.now()-state.courtStart[mid]);
+      else if(mid) tvEl.textContent='aguardando';   // partida na quadra, sem iniciar
+      else tvEl.textContent='';
+    }
   }
 }
 setInterval(tickTimers, 1000);
@@ -1440,8 +1456,11 @@ function renderTVCourts(){
       html+=`<div class="tv-court"><div class="tv-court-num">Quadra ${i+1}</div><div class="tv-free">Livre</div></div>`;
     } else {
       const m=MATCH_BY_ID[mid]; const A=resolveRef(m.a),B=resolveRef(m.b);
-      html+=`<div class="tv-court">
-        <div class="tv-court-num"><span>Quadra ${i+1}</span><span class="tmr" id="tvtimer_${i}"></span></div>
+      const started = state.courtStart && state.courtStart[mid];
+      const waiting = !started;  // partida na quadra mas cronômetro não iniciado
+      html+=`<div class="tv-court${waiting?' waiting':''}">
+        <div class="tv-court-num"><span>Quadra ${i+1}</span><span class="tmr" id="tvtimer_${i}">${waiting?'aguardando':''}</span></div>
+        ${waiting?'<div class="tv-call">▶ Chamar duplas</div>':''}
         <div class="tv-team">${A.name}</div>
         <div class="tv-vs">VS</div>
         <div class="tv-team">${B.name}</div>
@@ -1476,6 +1495,7 @@ function renderTVBracket(){
     groups[idx[key]].matches.push(m);
   });
 
+  const shortName=(s)=> s.replace(/^Vencedor\s+/,'Vc ').replace(/^Perdedor\s+/,'Pd ');
   const matchHTML=(m)=>{
     const A=resolveRef(m.a),B=resolveRef(m.b);
     const done=matchDone(m.id);
@@ -1485,7 +1505,8 @@ function renderTVBracket(){
     const row=(ref,resolved,isWin,isOut)=>{
       const cls=resolved.ready?(isWin?'win':(isOut?'out':'')):'feeder';
       const sc=done?`<span class="sc">${ref==='a'?r.aScore:r.bScore}</span>`:'';
-      return `<div class="tv-bteam ${cls}"><span>${resolved.name}</span>${sc}</div>`;
+      const nm=resolved.ready?resolved.name:shortName(resolved.name);
+      return `<div class="tv-bteam ${cls}"><span>${nm}</span>${sc}</div>`;
     };
     return `<div class="tv-bmatch ${live?'live':''}">${live?'<div class="tv-blive-tag">● Em quadra</div>':''}${row('a',A,aWin,bWin)}${row('b',B,bWin,aWin)}</div>`;
   };
@@ -1525,6 +1546,8 @@ document.getElementById('tvBtn').addEventListener('click',()=>{
   if(!state.drawn){ toast('Sorteie as duplas primeiro.'); return; }
   tvScreen=0;
   document.getElementById('tvOverlay').classList.add('show');
+  document.documentElement.classList.add('tv-open');
+  document.body.classList.add('tv-open');
   renderTV();
   startTvAutoRefresh();
   startTvRotate();
@@ -1532,6 +1555,8 @@ document.getElementById('tvBtn').addEventListener('click',()=>{
 });
 document.getElementById('tvClose').addEventListener('click',()=>{
   document.getElementById('tvOverlay').classList.remove('show');
+  document.documentElement.classList.remove('tv-open');
+  document.body.classList.remove('tv-open');
   stopTvAutoRefresh();
   stopTvRotate();
   if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(()=>{});
