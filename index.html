@@ -104,6 +104,10 @@
   .btn-timer-start:hover{box-shadow:3px 3px 0 var(--teal-deep)}
   .btn-timer-reset{background:var(--paper);color:var(--lose);border-color:var(--lose);box-shadow:2px 2px 0 var(--lose);font-size:12px;padding:6px}
   .btn-timer-reset:hover{box-shadow:3px 3px 0 var(--lose)}
+  .live-hint{font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--teal-deep);
+    text-align:center;letter-spacing:.03em;margin:2px 0 4px;opacity:.8}
+  .edit-row{display:flex;align-items:center;gap:12px;margin:6px 0}
+  .edit-name{flex:1;font-weight:600;font-size:15px}
 
   /* QUEUE */
   .panel-title{font-family:'Anton',sans-serif;font-size:clamp(20px,4vw,28px);text-transform:uppercase;
@@ -186,6 +190,9 @@
     font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--orange-deep);cursor:pointer}
   .bye-check input{width:18px;height:18px;accent-color:var(--orange);cursor:pointer}
   .bye-check input:disabled{cursor:not-allowed}
+  .bye-check.top-check{color:#b08800}
+  .bye-check.top-check input{accent-color:var(--yellow)}
+  .bye-check.top-check span{font-size:16px}
 
   /* MODAL */
   .modal-backdrop{position:fixed;inset:0;background:rgba(26,18,8,.55);z-index:80;
@@ -294,6 +301,10 @@
   .tv-court-num .tmr{font-size:clamp(14px,1.8vw,22px);color:#7CFF9B;font-family:'Barlow Condensed',sans-serif}
   .tv-team{font-family:'Barlow Condensed',sans-serif;font-weight:700;color:#fff;
     font-size:clamp(18px,2.4vw,34px);line-height:1.15;margin:1vh 0}
+  .tv-team-line{display:flex;align-items:center;justify-content:space-between;gap:2vw}
+  .tv-team-line .tv-team{margin:1vh 0;flex:1;min-width:0}
+  .tv-score{font-family:'Anton',sans-serif;color:var(--yellow);font-size:clamp(26px,4vw,56px);
+    line-height:1;flex:none}
   .tv-vs{font-family:'Anton',sans-serif;color:var(--orange);font-size:clamp(14px,1.8vw,24px);margin:.5vh 0}
   .tv-phase{font-family:'Barlow Condensed',sans-serif;color:rgba(255,250,240,.55);
     text-transform:uppercase;letter-spacing:.08em;font-size:clamp(11px,1.3vw,16px);margin-top:auto;padding-top:1.5vh}
@@ -487,6 +498,19 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="editBackdrop">
+  <div class="modal">
+    <div class="modal-msg" id="editTitle" style="margin-bottom:8px">Corrigir placar</div>
+    <div class="edit-row"><span id="editNameA" class="edit-name"></span><input type="number" min="0" id="editScoreA" class="score-input"></div>
+    <div style="text-align:center;font-family:'Barlow Condensed',sans-serif;color:var(--orange);font-weight:700;margin:6px 0">VS</div>
+    <div class="edit-row"><span id="editNameB" class="edit-name"></span><input type="number" min="0" id="editScoreB" class="score-input"></div>
+    <div class="modal-btns" style="margin-top:18px">
+      <button class="btn modal-cancel" id="editCancel">Cancelar</button>
+      <button class="btn btn-confirm" id="editSave" style="flex:1">Salvar correção</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -579,6 +603,35 @@ function rebuildBracket(){
   MATCH_DEFS=g.matches;
   MATCH_BY_ID=Object.fromEntries(MATCH_DEFS.map(m=>[m.id,m]));
   BRACKET_INFO={size:g.size,byes:g.byes,N};
+  computePlayOrder();
+}
+
+/* Profundidade = nº máximo de jogos encadeados antes desta partida.
+   Reordena a fila por profundidade pra empurrar jogos decisivos pro fim,
+   respeitando dependências (um jogo nunca vem antes dos que o alimentam). */
+function computePlayOrder(){
+  const depthCache={};
+  function depth(ref){
+    if(ref.type==='seed') return 0;
+    const m=MATCH_BY_ID[ref.id]; if(!m) return 0;
+    if(depthCache[m.id]!=null) return depthCache[m.id];
+    depthCache[m.id]=0; // proteção contra ciclo
+    const d=1+Math.max(depth(m.a), depth(m.b));
+    depthCache[m.id]=d; return d;
+  }
+  MATCH_DEFS.forEach(m=>{ m.depth = Math.max(depth(m.a), depth(m.b)); });
+  // ordena por profundidade; empate desempata pela ordem original de criação,
+  // dando leve preferência a jogos da repescagem (pra eles "correrem atrás")
+  const orig={}; MATCH_DEFS.forEach((m,i)=>orig[m.id]=m.order!=null?m.order:i);
+  const sorted=MATCH_DEFS.slice().sort((a,b)=>{
+    if(a.depth!==b.depth) return a.depth-b.depth;
+    // mesma profundidade: repescagem (LB) joga antes dos vencedores (WB) do mesmo nível,
+    // pra concentrar os jogos importantes da chave de cima mais pro fim
+    const rank=x=>x.bracket==='LB'?0:x.bracket==='WB'?1:2;
+    if(rank(a)!==rank(b)) return rank(a)-rank(b);
+    return orig[a.id]-orig[b.id];
+  });
+  sorted.forEach((m,i)=>{ m.order=i+1; });
 }
 
 const NUM_COURTS = 3;
@@ -670,6 +723,8 @@ function applyRemoteState(rs){
     if(!Array.isArray(state.courts)||state.courts.length!==NUM_COURTS) state.courts=[null,null,null];
     if(!state.courtStart||typeof state.courtStart!=='object') state.courtStart={};
     if(!Array.isArray(state.byeChoices)) state.byeChoices=[];
+    if(!Array.isArray(state.topChoices)) state.topChoices=[];
+    if(!state.liveScores||typeof state.liveScores!=='object') state.liveScores={};
     applySeeds();
     saveLocal();
     render();
@@ -704,7 +759,7 @@ function loadSyncPrefs(){
    results: { matchId: {aScore, bScore, winnerSide:'a'|'b'} }
    courts: [ matchId|null, matchId|null, matchId|null ]
    ============================================================ */
-let state = { results:{}, courts:[null,null,null], gf2needed:false, duplas:null, seeds:null, drawn:false, byeChoices:[], courtStart:{} };
+let state = { results:{}, courts:[null,null,null], gf2needed:false, duplas:null, seeds:null, drawn:false, byeChoices:[], topChoices:[], courtStart:{}, liveScores:{} };
 
 /* monta TEAMS (seed->nome) a partir de state.seeds (ordem dos seeds).
    Se ainda não foi sorteado (state.drawn=false), TEAMS fica vazio e não há chave. */
@@ -729,15 +784,18 @@ function load(){
   // por padrão começa NÃO sorteado (seeds em branco)
   if(typeof state.drawn!=='boolean') state.drawn=false;
   if(!Array.isArray(state.byeChoices)) state.byeChoices=[];
+  if(!Array.isArray(state.topChoices)) state.topChoices=[];
   if(!state.courtStart||typeof state.courtStart!=='object') state.courtStart={};
-  // limpa byeChoices de duplas que não existem mais
+  if(!state.liveScores||typeof state.liveScores!=='object') state.liveScores={};
+  // limpa escolhas de duplas que não existem mais
   state.byeChoices = state.byeChoices.filter(n=>state.duplas.includes(n));
+  state.topChoices = state.topChoices.filter(n=>state.duplas.includes(n));
   if(!state.drawn) state.seeds=null;
   applySeeds();
 }
 function saveLocal(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
 function pickPersisted(s){
-  return {results:s.results,courts:s.courts,gf2needed:s.gf2needed,duplas:s.duplas,seeds:s.seeds,drawn:s.drawn,byeChoices:s.byeChoices,courtStart:s.courtStart};
+  return {results:s.results,courts:s.courts,gf2needed:s.gf2needed,duplas:s.duplas,seeds:s.seeds,drawn:s.drawn,byeChoices:s.byeChoices,topChoices:s.topChoices,courtStart:s.courtStart,liveScores:s.liveScores};
 }
 function save(){
   saveLocal();
@@ -825,10 +883,11 @@ function submitResult(matchId, aScore, bScore){
   // libera a quadra
   const ci = state.courts.indexOf(matchId);
   if(ci>=0) state.courts[ci]=null;
+  if(state.courtStart) delete state.courtStart[matchId];  // limpa cronômetro da partida encerrada
+  if(state.liveScores) delete state.liveScores[matchId];  // limpa placar parcial
   assignCourts();
   save();
   render();
-  const w = resolveRef(MATCH_BY_ID[matchId].winnerSide==='a'?{type:'win',id:matchId}:{type:'win',id:matchId});
   toast(`✅ ${matchId} registrado · vencedor: ${winnerName(matchId)}`);
   return true;
 }
@@ -842,18 +901,57 @@ function loserName(matchId){
 }
 
 function editResult(matchId){
-  const hadDependentsPlayed = anyDependentPlayed(matchId);
-  const doEdit = ()=>{
-    delete state.results[matchId];
-    assignCourts();
-    save(); render();
-    toast(`✏️ ${matchId} reaberto pra correção`);
-    switchView('control');
+  const m=MATCH_BY_ID[matchId]; const r=state.results[matchId]; if(!m||!r) return;
+  const A=resolveRef(m.a), B=resolveRef(m.b);
+  _editingMatchId=matchId;
+  document.getElementById('editTitle').textContent='Corrigir placar · '+(matchId==='GF'?'GRANDE FINAL':matchId);
+  document.getElementById('editNameA').textContent=A.name;
+  document.getElementById('editNameB').textContent=B.name;
+  document.getElementById('editScoreA').value=r.aScore;
+  document.getElementById('editScoreB').value=r.bScore;
+  document.getElementById('editBackdrop').classList.add('show');
+}
+let _editingMatchId=null;
+function saveEditedResult(){
+  const matchId=_editingMatchId; if(!matchId) return;
+  const a=parseInt(document.getElementById('editScoreA').value,10);
+  const b=parseInt(document.getElementById('editScoreB').value,10);
+  if(isNaN(a)||isNaN(b)){ toast('Preencha os dois placares.'); return; }
+  if(a===b){ toast('Placar não pode dar empate.'); return; }
+  const prev=state.results[matchId];
+  const newWinner=a>b?'a':'b';
+  const winnerChanged = prev && prev.winnerSide!==newWinner;
+  const apply=()=>{
+    state.results[matchId]={aScore:a,bScore:b,winnerSide:newWinner};
+    // se o vencedor mudou, os jogos seguintes que dependiam viram inválidos: removê-los
+    if(winnerChanged) removeDependentResults(matchId);
+    assignCourts(); save(); render();
+    document.getElementById('editBackdrop').classList.remove('show');
+    _editingMatchId=null;
+    toast('✏️ Placar corrigido.');
   };
-  if(hadDependentsPlayed){
-    askConfirm('Já há jogos seguintes registrados que dependem deste resultado. Corrigir pode bagunçar a chave. Continuar mesmo assim?', doEdit);
+  if(winnerChanged && anyDependentPlayed(matchId)){
+    askConfirm('Você mudou o VENCEDOR desta partida. Os jogos seguintes que dependiam dela serão apagados pra refazer a chave. Continuar?', apply);
   } else {
-    doEdit();
+    apply();
+  }
+}
+function removeDependentResults(matchId){
+  // remove em cascata resultados de partidas que dependem (direta ou indiretamente) de matchId
+  let changed=true;
+  const removed=new Set([matchId]);
+  while(changed){
+    changed=false;
+    MATCH_DEFS.forEach(m=>{
+      if(!state.results[m.id]) return;
+      const deps=[m.a,m.b].filter(ref=>ref.type!=='seed').map(ref=>ref.id);
+      if(deps.some(d=>removed.has(d)) && !removed.has(m.id)){
+        delete state.results[m.id];
+        if(state.courtStart) delete state.courtStart[m.id];
+        if(state.liveScores) delete state.liveScores[m.id];
+        removed.add(m.id); changed=true;
+      }
+    });
   }
 }
 function anyDependentPlayed(matchId){
@@ -879,6 +977,7 @@ function resetTorneioState(){
   state.results = {};
   state.courts = [null,null,null];
   state.gf2needed = false;
+  state.courtStart = {};   // zera todos os cronômetros — start é manual após sortear
 }
 /* volta o torneio pro ponto "antes do sorteio": sem seeds, sem chave */
 function clearDraw(){
@@ -890,13 +989,28 @@ function clearDraw(){
 function computeSeeds(){
   const N=state.duplas.length;
   const byes=nextPow2(N)-N;
-  const chosen=(state.byeChoices||[]).filter(nome=>state.duplas.includes(nome));
-  // duplas escolhidas pra bye (até o limite de byes); resto sorteado
-  const byeTeams = shuffle(chosen).slice(0, byes);   // se marcou mais que o nº de byes, sorteia entre os marcados
-  const rest = shuffle(state.duplas.filter(n=>!byeTeams.includes(n)));
-  // se faltou bye (marcou menos que o disponível), completa com duplas do resto
-  while(byeTeams.length<byes && rest.length){ byeTeams.push(rest.shift()); }
-  return byeTeams.concat(rest); // primeiras posições = byes
+  const byeChosen=(state.byeChoices||[]).filter(nome=>state.duplas.includes(nome));
+  const topChosen=(state.topChoices||[]).filter(nome=>state.duplas.includes(nome));
+
+  // 1) Byes: primeiras posições (1..byes). Se marcou mais byes que slots, sorteia entre os marcados.
+  const byeTeams = shuffle(byeChosen).slice(0, byes);
+
+  // 2) Cabeças de chave que NÃO foram pra bye:
+  //    vão pras posições logo após os byes (byes+1, byes+2, ...).
+  //    A seedOrderArr distribui essas posições em quadrantes opostos, então
+  //    eles ficam naturalmente separados no chaveamento.
+  const tops = shuffle(topChosen.filter(n=>!byeTeams.includes(n)));
+
+  // 3) Restante: tudo que não é bye nem cabeça
+  const rest = shuffle(state.duplas.filter(n=>!byeTeams.includes(n) && !tops.includes(n)));
+
+  // Se faltou bye (menos marcados que slots), completa primeiro com cabeças que sobrarem,
+  // depois com o resto — assim os cabeças nunca "descem" da proteção
+  while(byeTeams.length<byes && (tops.length||rest.length)){
+    byeTeams.push(tops.length?tops.shift():rest.shift());
+  }
+  // ordem final: [byes] + [cabeças nas próximas posições] + [resto]
+  return byeTeams.concat(tops).concat(rest);
 }
 function applyDrawResult(seeds){
   state.seeds = seeds;
@@ -939,6 +1053,7 @@ function removeDupla(idx){
   askConfirm(`Excluir a dupla "${nome}"?`,()=>{
     state.duplas.splice(idx,1);
     state.byeChoices=(state.byeChoices||[]).filter(n=>n!==nome);
+    state.topChoices=(state.topChoices||[]).filter(n=>n!==nome);
     clearDraw(); save(); render();
     toast('🗑️ Dupla removida.');
   });
@@ -952,6 +1067,14 @@ function toggleBye(idx, checked){
   if(state.drawn){ clearDraw(); }
   save(); render();
 }
+function toggleTop(idx, checked){
+  const nome=state.duplas[idx];
+  if(!Array.isArray(state.topChoices)) state.topChoices=[];
+  if(checked){ if(!state.topChoices.includes(nome)) state.topChoices.push(nome); }
+  else { state.topChoices=state.topChoices.filter(n=>n!==nome); }
+  if(state.drawn){ clearDraw(); }
+  save(); render();
+}
 
 function renderDrawSeeds(){
   // lista de gestão de duplas
@@ -961,12 +1084,17 @@ function renderDrawSeeds(){
     const byes=N>=3?(nextPow2(N)-N):0;
     const chosenCount=(state.byeChoices||[]).length;
     mgr.innerHTML = state.duplas.map((nome,i)=>{
-      const checked=(state.byeChoices||[]).includes(nome)?'checked':'';
+      const chBye=(state.byeChoices||[]).includes(nome)?'checked':'';
+      const chTop=(state.topChoices||[]).includes(nome)?'checked':'';
       return `<div class="dupla-row">
         <span class="dupla-idx">${i+1}</span>
         <input class="dupla-input" value="${nome.replace(/"/g,'&quot;')}" data-idx="${i}">
+        <label class="bye-check top-check" title="Cabeça de chave: distribuído pra não cruzar com outros cabeças cedo">
+          <input type="checkbox" data-top="${i}" ${chTop}>
+          <span>⭐</span>
+        </label>
         <label class="bye-check" title="Marcar para dar bye a esta dupla">
-          <input type="checkbox" data-bye="${i}" ${checked} ${byes===0?'disabled':''}>
+          <input type="checkbox" data-bye="${i}" ${chBye} ${byes===0?'disabled':''}>
           <span>Bye</span>
         </label>
         <button class="dupla-del" data-del="${i}" title="Excluir">✕</button>
@@ -981,6 +1109,9 @@ function renderDrawSeeds(){
     mgr.querySelectorAll('[data-bye]').forEach(cb=>{
       cb.addEventListener('change',e=>toggleBye(+e.target.dataset.bye, e.target.checked));
     });
+    mgr.querySelectorAll('[data-top]').forEach(cb=>{
+      cb.addEventListener('change',e=>toggleTop(+e.target.dataset.top, e.target.checked));
+    });
   }
   // info de byes
   const info=document.getElementById('drawInfo');
@@ -990,12 +1121,14 @@ function renderDrawSeeds(){
     else{
       const size=nextPow2(N), byes=size-N;
       const chosen=(state.byeChoices||[]).length;
+      const tops=(state.topChoices||[]).length;
       let extra='';
       if(byes===0) extra=' · nenhum bye nesta quantidade de duplas';
       else if(chosen===0) extra=` · marque até ${byes} dupla${byes===1?'':'s'} pra bye, ou deixe no sorteio`;
       else if(chosen<=byes) extra=` · ${chosen} dupla${chosen===1?'':'s'} marcada${chosen===1?'':'s'} pra bye${chosen<byes?` (faltam ${byes-chosen} no sorteio)`:''}`;
       else extra=` · ⚠️ ${chosen} marcadas, mas só há ${byes} bye${byes===1?'':'s'} — serão sorteadas entre as marcadas`;
-      info.innerHTML = `<strong>${N} duplas</strong> · chave ${size} · <strong>${byes} bye${byes===1?'':'s'}</strong>${extra}`;
+      const topInfo = tops>0 ? `<br>⭐ ${tops} cabeça${tops===1?'':'s'} de chave — serão distribuídas em posições opostas pra não se cruzarem cedo` : '';
+      info.innerHTML = `<strong>${N} duplas</strong> · chave ${size} · <strong>${byes} bye${byes===1?'':'s'}</strong>${extra}${topInfo}`;
     }
   }
   // seeds atuais
@@ -1076,6 +1209,9 @@ function renderCourts(){
       const m = MATCH_BY_ID[mid];
       const A = resolveRef(m.a), B = resolveRef(m.b);
       const started = state.courtStart && state.courtStart[mid];
+      const live = (state.liveScores && state.liveScores[mid]) || null;
+      const valA = live ? live.a : '';
+      const valB = live ? live.b : '';
       const headTimer = started
         ? `<span class="court-timer"><span class="dotpulse"></span><span id="timer_${i}"></span></span>`
         : `<span class="court-timer" style="opacity:.6">⏱ --:--</span>`;
@@ -1089,15 +1225,16 @@ function renderCourts(){
           <div class="phase-tag">${m.phase}</div>
           <div class="team-row">
             <span class="team-name">${A.name}</span>
-            <input class="score-input" type="number" inputmode="numeric" min="0" id="sa_${mid}" placeholder="0">
+            <input class="score-input" type="number" inputmode="numeric" min="0" id="sa_${mid}" placeholder="0" value="${valA}" oninput="updateLive('${mid}')">
           </div>
           <div class="vs-mini">VS</div>
           <div class="team-row">
             <span class="team-name">${B.name}</span>
-            <input class="score-input" type="number" inputmode="numeric" min="0" id="sb_${mid}" placeholder="0">
+            <input class="score-input" type="number" inputmode="numeric" min="0" id="sb_${mid}" placeholder="0" value="${valB}" oninput="updateLive('${mid}')">
           </div>
+          <div class="live-hint">📺 O placar digitado aparece ao vivo no telão</div>
           ${startBtn}
-          <button class="btn btn-confirm" onclick="confirmCourt('${mid}')">Registrar resultado</button>
+          <button class="btn btn-confirm" onclick="confirmCourt('${mid}')">Registrar resultado final</button>
         </div>`;
     }
     wrap.appendChild(div);
@@ -1112,6 +1249,15 @@ window.confirmCourt = function(mid){
   submitResult(mid,a,b);
 };
 
+window.updateLive = function(mid){
+  const a = parseInt(document.getElementById('sa_'+mid).value,10);
+  const b = parseInt(document.getElementById('sb_'+mid).value,10);
+  if(!state.liveScores) state.liveScores={};
+  if(isNaN(a) && isNaN(b)){ delete state.liveScores[mid]; }
+  else state.liveScores[mid]={a:isNaN(a)?0:a, b:isNaN(b)?0:b};
+  save();           // sincroniza com o telão
+  renderTV();       // atualiza telão imediatamente se estiver aberto na mesma tela
+};
 window.startCourtTimer = function(mid){
   if(!state.courtStart) state.courtStart={};
   state.courtStart[mid]=Date.now();
@@ -1275,6 +1421,14 @@ document.getElementById('modalCancel').addEventListener('click',()=>{
 });
 document.getElementById('modalBackdrop').addEventListener('click',e=>{
   if(e.target.id==='modalBackdrop'){ document.getElementById('modalBackdrop').classList.remove('show'); _confirmCb=null; }
+});
+// modal de edição de placar
+document.getElementById('editSave').addEventListener('click', saveEditedResult);
+document.getElementById('editCancel').addEventListener('click',()=>{
+  document.getElementById('editBackdrop').classList.remove('show'); _editingMatchId=null;
+});
+document.getElementById('editBackdrop').addEventListener('click',e=>{
+  if(e.target.id==='editBackdrop'){ document.getElementById('editBackdrop').classList.remove('show'); _editingMatchId=null; }
 });
 
 document.getElementById('resetBtn').addEventListener('click',()=>{
@@ -1457,13 +1611,16 @@ function renderTVCourts(){
     } else {
       const m=MATCH_BY_ID[mid]; const A=resolveRef(m.a),B=resolveRef(m.b);
       const started = state.courtStart && state.courtStart[mid];
-      const waiting = !started;  // partida na quadra mas cronômetro não iniciado
+      const waiting = !started;
+      const live = (state.liveScores && state.liveScores[mid]) || null;
+      const scoreA = live ? `<span class="tv-score">${live.a}</span>` : '';
+      const scoreB = live ? `<span class="tv-score">${live.b}</span>` : '';
       html+=`<div class="tv-court${waiting?' waiting':''}">
         <div class="tv-court-num"><span>Quadra ${i+1}</span><span class="tmr" id="tvtimer_${i}">${waiting?'aguardando':''}</span></div>
         ${waiting?'<div class="tv-call">▶ Chamar duplas</div>':''}
-        <div class="tv-team">${A.name}</div>
+        <div class="tv-team-line"><span class="tv-team">${A.name}</span>${scoreA}</div>
         <div class="tv-vs">VS</div>
-        <div class="tv-team">${B.name}</div>
+        <div class="tv-team-line"><span class="tv-team">${B.name}</span>${scoreB}</div>
         <div class="tv-phase">${m.id==='GF'?'GRANDE FINAL':m.id==='GF2'?'FINAL RESET':m.phase}</div>
       </div>`;
     }
