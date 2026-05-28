@@ -366,12 +366,16 @@
 
   <header>
     <span class="kicker">Mesa de Controle · Ao Vivo</span>
-    <h1>Torneio de <span class="ball">Futevôlei</span></h1>
+    <h1 id="mainTitle">Torneio de <span class="ball">Futevôlei</span></h1>
     <div class="progress-line" id="progressLine">Carregando…</div>
     <div class="sync-bar">
+      <input class="sync-room" id="tournamentNameInput" placeholder="Nome do torneio (ex: Copa Futevôlei 2026)" maxlength="60" style="max-width:280px">
+    </div>
+    <div class="sync-bar">
       <span class="sync-status" id="syncStatus">⚪ Offline</span>
-      <input class="sync-room" id="roomInput" placeholder="nome da sala (ex: futevolei2026)" maxlength="40">
+      <input class="sync-room" id="roomInput" placeholder="código da sala (ex: futevolei2026)" maxlength="40">
       <button class="mini-btn" id="syncConnectBtn" style="padding:7px 14px">Conectar</button>
+      <button class="mini-btn" id="syncDisconnectBtn" style="padding:7px 14px;display:none;background:#f3ecd9;color:var(--lose);border-color:var(--lose);box-shadow:2px 2px 0 var(--lose)">Desconectar</button>
       <label class="sync-mode" title="No telão, deixe marcado para evitar cliques acidentais">
         <input type="checkbox" id="readOnlyChk"> Só exibição
       </label>
@@ -463,7 +467,7 @@
 <!-- MODO TV / TELÃO -->
 <div class="tv-overlay" id="tvOverlay">
   <div class="tv-head">
-    <div class="tv-title">🏐 Torneio de <span class="ball">Futevôlei</span></div>
+    <div class="tv-title" id="tvTitle">🏐 Torneio de <span class="ball">Futevôlei</span></div>
     <div class="tv-dots">
       <span class="tv-dot" data-screen="0"></span>
       <span class="tv-dot" data-screen="1"></span>
@@ -694,6 +698,8 @@ function connectRoom(room, readOnly){
     }
     SYNC.connected=true;
     setSyncStatus('on', (SYNC.readOnly?'Exibindo · ':'Controlando · ')+'sala "'+room+'"');
+    document.getElementById('syncConnectBtn').style.display='none';
+    document.getElementById('syncDisconnectBtn').style.display='';
     saveSyncPrefs();
   }).catch(e=>{ console.warn(e); setSyncStatus('err','Falha ao conectar'); });
 
@@ -705,12 +711,19 @@ function connectRoom(room, readOnly){
     if(remote.drawEvent && remote.drawEvent.id && remote.drawEvent.id!==_lastDrawEventId){
       _lastDrawEventId = remote.drawEvent.id;
       const seeds = remote.drawEvent.seeds||[];
-      // só anima se não fui eu quem disparou (quem dispara já está animando)
       if(remote.drawEvent.origin !== _myClientId){
-        runDrawAnimation(seeds, ()=>{ /* o estado final chega via remote.state */ });
+        runDrawAnimation(seeds, ()=>{
+          // ao terminar a animação no telão, entra automaticamente no modo telão
+          if(SYNC.readOnly) autoEnterTV();
+        });
       }
     }
-    if(remote.state){ applyRemoteState(remote.state); }
+    if(remote.state){
+      // ignora se o eco for do próprio aparelho (evita perder foco em input enquanto digito)
+      const meta=remote.meta;
+      const isEchoOfMine = meta && meta.writerId===_myClientId && meta.writeAt<=_lastWriteAt;
+      if(!isEchoOfMine) applyRemoteState(remote.state);
+    }
   }, err=>{ console.warn('listener err',err); setSyncStatus('err','Conexão perdida'); SYNC.connected=false; });
 }
 const _myClientId = 'c'+Math.random().toString(36).slice(2,9);
@@ -719,6 +732,13 @@ function applyRemoteState(rs){
   // evita loop: marca que estamos aplicando algo vindo do servidor
   fbApplyingRemote=true;
   try{
+    // se o usuário está digitando num input de placar, adia a re-renderização
+    const af=document.activeElement;
+    const typingScore = af && /^(sa_|sb_|editScore|tournamentNameInput|newDupla|roomInput)/.test(af.id||'');
+    const focusId=af && af.id ? af.id : null;
+    const selStart=af && af.selectionStart!=null?af.selectionStart:null;
+    const selEnd=af && af.selectionEnd!=null?af.selectionEnd:null;
+
     state = Object.assign(state, rs);
     if(!Array.isArray(state.courts)||state.courts.length!==NUM_COURTS) state.courts=[null,null,null];
     if(!state.courtStart||typeof state.courtStart!=='object') state.courtStart={};
@@ -727,20 +747,46 @@ function applyRemoteState(rs){
     if(!state.liveScores||typeof state.liveScores!=='object') state.liveScores={};
     applySeeds();
     saveLocal();
-    render();
+    if(typingScore){
+      // re-renderiza só as partes que NÃO contém o input focado
+      renderTV(); renderNextPreview(); renderQueue(); renderResults(); renderStandings(); renderProgress();
+      if(typeof updateTournamentNameUI==='function') updateTournamentNameUI();
+    } else {
+      render();
+    }
+    if(focusId){
+      const el=document.getElementById(focusId);
+      if(el && el!==document.activeElement){ el.focus(); try{ el.setSelectionRange(selStart,selEnd); }catch(e){} }
+    }
   }finally{ fbApplyingRemote=false; }
 }
+function disconnect(){
+  if(fbRoomRef){ try{ fbRoomRef.off(); }catch(e){} fbRoomRef=null; }
+  SYNC.connected=false; SYNC.room=null;
+  setSyncStatus('off','Offline · sem sala');
+  document.getElementById('syncDisconnectBtn').style.display='none';
+  document.getElementById('syncConnectBtn').style.display='';
+  saveSyncPrefs();
+  toast('🔌 Desconectado da sala.');
+}
+
 function pushToFirebase(){
   if(!SYNC.connected && !fbRoomRef) return;
   if(SYNC.readOnly) return;          // telão não escreve
   if(fbApplyingRemote) return;        // não reescreve o que acabou de chegar
   if(!fbRoomRef) return;
   try{
-    // usa update pra não apagar o drawEvent existente
-    fbRoomRef.child('state').set(pickPersisted(state));
-    fbRoomRef.child('updatedAt').set(Date.now());
+    const ts=Date.now();
+    _lastWriteAt=ts;
+    // operação ATÔMICA: state + meta numa única escrita
+    fbRoomRef.update({
+      state: pickPersisted(state),
+      meta: { writerId:_myClientId, writeAt:ts },
+      updatedAt: ts
+    });
   }catch(e){ console.warn('push fail',e); }
 }
+let _lastWriteAt=0;
 function pushDrawEvent(seeds){
   if(SYNC.readOnly || !fbRoomRef) return;
   const id='d'+Date.now();
@@ -759,7 +805,7 @@ function loadSyncPrefs(){
    results: { matchId: {aScore, bScore, winnerSide:'a'|'b'} }
    courts: [ matchId|null, matchId|null, matchId|null ]
    ============================================================ */
-let state = { results:{}, courts:[null,null,null], gf2needed:false, duplas:null, seeds:null, drawn:false, byeChoices:[], topChoices:[], courtStart:{}, liveScores:{} };
+let state = { results:{}, courts:[null,null,null], gf2needed:false, duplas:null, seeds:null, drawn:false, byeChoices:[], topChoices:[], courtStart:{}, liveScores:{}, tournamentName:'' };
 
 /* monta TEAMS (seed->nome) a partir de state.seeds (ordem dos seeds).
    Se ainda não foi sorteado (state.drawn=false), TEAMS fica vazio e não há chave. */
@@ -795,7 +841,7 @@ function load(){
 }
 function saveLocal(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
 function pickPersisted(s){
-  return {results:s.results,courts:s.courts,gf2needed:s.gf2needed,duplas:s.duplas,seeds:s.seeds,drawn:s.drawn,byeChoices:s.byeChoices,topChoices:s.topChoices,courtStart:s.courtStart,liveScores:s.liveScores};
+  return {results:s.results,courts:s.courts,gf2needed:s.gf2needed,duplas:s.duplas,seeds:s.seeds,drawn:s.drawn,byeChoices:s.byeChoices,topChoices:s.topChoices,courtStart:s.courtStart,liveScores:s.liveScores,tournamentName:s.tournamentName};
 }
 function save(){
   saveLocal();
@@ -1165,7 +1211,8 @@ function render(){
   renderTV();
   tickTimers();
   checkChampionCelebration();
-  saveLocal();   // persiste local a cada render; o push ao Firebase ocorre nas mutações (save())
+  if(typeof updateTournamentNameUI==='function') updateTournamentNameUI();
+  saveLocal();
 }
 let _lastChamp=null;
 function checkChampionCelebration(){
@@ -1409,7 +1456,7 @@ function toast(msg){
 let _confirmCb=null;
 function askConfirm(msg, onYes){
   _confirmCb=onYes;
-  document.getElementById('modalMsg').textContent=msg;
+  document.getElementById('modalMsg').innerHTML=String(msg).replace(/\n/g,'<br>');
   document.getElementById('modalBackdrop').classList.add('show');
 }
 document.getElementById('modalOk').addEventListener('click',()=>{
@@ -1438,12 +1485,12 @@ document.getElementById('resetBtn').addEventListener('click',()=>{
 });
 
 document.getElementById('drawBtn').addEventListener('click',()=>{
+  if(state.duplas.length<3){ toast('Precisa de pelo menos 3 duplas.'); return; }
   const temJogos = Object.keys(state.results).length>0;
-  if(temJogos){
-    askConfirm('Já existem resultados registrados. Sortear de novo vai apagar todos os placares e remontar a chave. Continuar?', doDraw);
-  } else {
-    doDraw();
-  }
+  const msg = temJogos
+    ? `🎲 Sortear ${state.duplas.length} duplas?\n\n⚠️ Já existem resultados registrados — serão APAGADOS e a chave será remontada.`
+    : `🎲 Confirma sortear as ${state.duplas.length} duplas e iniciar o torneio?`;
+  askConfirm(msg, doDraw);
 });
 
 document.getElementById('addDuplaBtn').addEventListener('click',()=>{
@@ -1503,18 +1550,34 @@ function runDrawAnimation(seeds, onDone){
   const locked=document.getElementById('drawLocked');
   const stageLbl=document.getElementById('drawStageLbl');
   const N=seeds.length, byes=nextPow2(N)-N;
-  locked.innerHTML=''; ov.classList.add('show'); stageLbl.textContent='Sorteando as duplas…';
+  const tName=(state.tournamentName||'').trim();
+  locked.innerHTML=''; ov.classList.add('show');
+  byeTag.classList.remove('show'); roller.classList.remove('bye');
   clearDrawTimers();
 
-  let i=0;
-  const allNames=seeds.slice();
+  // FASE 1: SUSPENSE com nome do torneio (~2.6s)
+  stageLbl.textContent = tName ? '🏆 '+tName : '🏐 Sorteio do Torneio';
+  seedNum.textContent = 'Preparando sorteio…';
+  roller.textContent = '✨';
+  roller.style.transform='scale(1.3)';
+  const t1=setTimeout(()=>{
+    roller.style.transform='scale(1)';
+    roller.textContent = N+' duplas em disputa';
+    seedNum.textContent = byes>0 ? byes+' bye'+(byes===1?'':'s')+' nesta chave' : 'Chave completa, sem byes';
+  }, 1200); drawAnimTimers.push(t1);
+
+  const t2=setTimeout(()=>{
+    stageLbl.textContent='🎲 Sorteando as duplas…';
+    revealSeed(0);
+  }, 2600); drawAnimTimers.push(t2);
+
   function revealSeed(idx){
     if(idx>=N){
       // fim
       stageLbl.textContent='✅ Sorteio concluído!';
-      seedNum.textContent=''; roller.textContent=''; byeTag.classList.remove('show');
-      fireConfetti(1500);
-      const t=setTimeout(()=>{ ov.classList.remove('show'); onDone&&onDone(); }, 1400);
+      seedNum.textContent=''; roller.textContent=tName?'🏆 '+tName:'🏆 Boa sorte!'; byeTag.classList.remove('show');
+      fireConfetti(2500);
+      const t=setTimeout(()=>{ ov.classList.remove('show'); onDone&&onDone(); }, 1800);
       drawAnimTimers.push(t);
       return;
     }
@@ -1522,16 +1585,14 @@ function runDrawAnimation(seeds, onDone){
     seedNum.textContent='Seed '+(idx+1)+(isBye?' · BYE':'');
     byeTag.classList.remove('show');
     roller.classList.toggle('bye', isBye);
-    // fase de embaralhamento rápido
     let spins=0; const spinsTotal=12+Math.floor(Math.random()*6);
     function spin(){
-      roller.textContent = allNames[Math.floor(Math.random()*allNames.length)];
+      roller.textContent = seeds[Math.floor(Math.random()*seeds.length)];
       roller.style.transform='scale('+(0.96+Math.random()*0.08)+')';
       spins++;
       if(spins<spinsTotal){
         const t=setTimeout(spin, 60+spins*8); drawAnimTimers.push(t);
       } else {
-        // trava no nome certo
         roller.textContent=seeds[idx]; roller.style.transform='scale(1.08)';
         if(isBye) byeTag.classList.add('show');
         const li=document.createElement('div');
@@ -1544,7 +1605,6 @@ function runDrawAnimation(seeds, onDone){
     }
     spin();
   }
-  revealSeed(0);
 }
 document.getElementById('drawSkip').addEventListener('click',()=>{
   // pula: encerra animação e aplica direto
@@ -1699,7 +1759,7 @@ function startTvRotate(){
 }
 function stopTvRotate(){ if(tvRotateTimer){ clearInterval(tvRotateTimer); tvRotateTimer=null; } }
 
-document.getElementById('tvBtn').addEventListener('click',()=>{
+function openTV(){
   if(!state.drawn){ toast('Sorteie as duplas primeiro.'); return; }
   tvScreen=0;
   document.getElementById('tvOverlay').classList.add('show');
@@ -1709,7 +1769,12 @@ document.getElementById('tvBtn').addEventListener('click',()=>{
   startTvAutoRefresh();
   startTvRotate();
   if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
-});
+}
+function autoEnterTV(){
+  // entra no modo telão automaticamente (usado pelo telão após sorteio sincronizado)
+  if(state.drawn) openTV();
+}
+document.getElementById('tvBtn').addEventListener('click', openTV);
 document.getElementById('tvClose').addEventListener('click',()=>{
   document.getElementById('tvOverlay').classList.remove('show');
   document.documentElement.classList.remove('tv-open');
@@ -1813,6 +1878,9 @@ document.getElementById('syncConnectBtn').addEventListener('click',()=>{
   const ro=document.getElementById('readOnlyChk').checked;
   connectRoom(room, ro);
 });
+document.getElementById('syncDisconnectBtn').addEventListener('click',()=>{
+  askConfirm('Desconectar desta sala? Você pode reconectar depois.', disconnect);
+});
 document.getElementById('roomInput').addEventListener('keydown',e=>{
   if(e.key==='Enter'){ connectRoom(e.target.value, document.getElementById('readOnlyChk').checked); }
 });
@@ -1821,12 +1889,38 @@ document.getElementById('readOnlyChk').addEventListener('change',e=>{
   if(SYNC.connected) setSyncStatus('on',(SYNC.readOnly?'Exibindo · ':'Controlando · ')+'sala "'+SYNC.room+'"');
 });
 
+// Nome do torneio: atualiza estado e título principal
+document.getElementById('tournamentNameInput').addEventListener('input',e=>{
+  state.tournamentName = e.target.value;
+  updateTournamentNameUI();
+  // debounce: salva ao perder foco ou após pausa
+});
+document.getElementById('tournamentNameInput').addEventListener('change',e=>{
+  state.tournamentName = e.target.value.trim();
+  updateTournamentNameUI();
+  save();
+});
+function updateTournamentNameUI(){
+  const n=(state.tournamentName||'').trim();
+  const title=document.getElementById('mainTitle');
+  if(title) title.innerHTML = n ? `<span class="ball">${n}</span>` : 'Torneio de <span class="ball">Futevôlei</span>';
+  const tvTitle=document.getElementById('tvTitle');
+  if(tvTitle) tvTitle.innerHTML = n ? `🏆 <span class="ball">${n}</span>` : '🏐 Torneio de <span class="ball">Futevôlei</span>';
+  // sincroniza valor do input (caso o nome venha do Firebase)
+  const inp=document.getElementById('tournamentNameInput');
+  if(inp && inp.value!==n) inp.value=n;
+}
+
 /* ============================================================
    INIT
    ============================================================ */
 load();
+// preenche o input do nome do torneio
+const _tnInput=document.getElementById('tournamentNameInput');
+if(_tnInput) _tnInput.value = state.tournamentName||'';
+updateTournamentNameUI();
 render();
-if(!state.drawn) switchView('draw');
+// (não força mais a aba de sorteio ao entrar — entra na aba "Quadras")
 
 // reconecta à última sala usada (se houver)
 (function reconnectSync(){
