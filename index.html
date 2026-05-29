@@ -114,6 +114,42 @@
     letter-spacing:.02em;margin:6px 0 4px;display:flex;align-items:center;gap:10px}
   .panel-title .dot{width:14px;height:14px;border-radius:50%;background:var(--orange)}
   .panel-note{font-size:13px;color:#6b5530;margin-bottom:16px;font-weight:500}
+
+  /* ============ CHAVE NO MODO CONTROLE ============ */
+  .bracket-view{display:flex;flex-direction:column;gap:18px}
+  .bv-band{background:var(--paper);border:2px solid var(--ink);border-radius:12px;padding:12px;
+    box-shadow:3px 3px 0 rgba(26,18,8,.8)}
+  .bv-band-title{font-family:'Anton',sans-serif;font-size:16px;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--ink);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .bv-pill{width:14px;height:14px;border-radius:3px;flex:none}
+  .bv-pill.wb{background:var(--teal)} .bv-pill.lb{background:var(--lose)} .bv-pill.gf{background:var(--orange-deep)}
+  .bv-band-cols{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;align-items:stretch}
+  .bv-band-cols::-webkit-scrollbar{height:8px}
+  .bv-band-cols::-webkit-scrollbar-thumb{background:var(--ink);border-radius:4px}
+  .bv-col{flex:0 0 165px;display:flex;flex-direction:column;gap:6px}
+  .bv-col-lbl{font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;
+    letter-spacing:.05em;font-size:11px;color:#fff;text-align:center;padding:4px 6px;border-radius:5px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bv-col-lbl.wb{background:var(--teal)} .bv-col-lbl.lb{background:var(--lose)} .bv-col-lbl.gf{background:var(--orange-deep)}
+  .bv-match{background:#fff;border:2px solid var(--ink);border-radius:8px;overflow:hidden;
+    box-shadow:2px 2px 0 rgba(26,18,8,.6);position:relative}
+  .bv-match.live{border-color:var(--orange);box-shadow:2px 2px 0 var(--orange-deep);
+    animation:bvLivePulse 1.8s ease-in-out infinite}
+  @keyframes bvLivePulse{0%,100%{box-shadow:2px 2px 0 var(--orange-deep)} 50%{box-shadow:2px 2px 0 var(--orange-deep), 0 0 14px rgba(255,94,26,.5)}}
+  .bv-code{font-family:'Anton',sans-serif;font-size:11px;background:var(--ink);color:var(--yellow);
+    text-align:center;padding:2px;letter-spacing:.03em}
+  .bv-live-tag{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;
+    background:var(--yellow);color:var(--ink);text-align:center;padding:2px;letter-spacing:.04em;text-transform:uppercase}
+  .bv-team{font-family:'Barlow',sans-serif;font-weight:600;color:var(--ink);font-size:13px;
+    padding:6px 8px;line-height:1.15;display:flex;justify-content:space-between;gap:6px;
+    border-bottom:1px solid rgba(26,18,8,.1)}
+  .bv-team:last-child{border-bottom:none}
+  .bv-team span:first-child{min-width:0;word-break:break-word}
+  .bv-team.win{color:var(--green);font-weight:700;background:rgba(28,138,79,.08)}
+  .bv-team.out{color:rgba(26,18,8,.4);text-decoration:line-through}
+  .bv-team.feeder{color:rgba(26,18,8,.45);font-style:italic;font-size:12px}
+  .bv-sc{font-family:'Anton',sans-serif;color:var(--orange-deep);flex:none}
+  .bv-team.win .bv-sc{color:var(--green)}
   .qitem{display:flex;align-items:center;background:var(--paper);border:2px solid var(--ink);
     border-radius:8px;margin-bottom:8px;overflow:hidden;box-shadow:2px 2px 0 rgba(26,18,8,.8)}
   .qitem.waiting{opacity:.62;border-style:dashed}
@@ -308,6 +344,9 @@
   .tv-vs{font-family:'Anton',sans-serif;color:var(--orange);font-size:clamp(14px,1.8vw,24px);margin:.5vh 0}
   .tv-phase{font-family:'Barlow Condensed',sans-serif;color:rgba(255,250,240,.55);
     text-transform:uppercase;letter-spacing:.08em;font-size:clamp(11px,1.3vw,16px);margin-top:auto;padding-top:1.5vh}
+  .tv-game-code{font-family:'Anton',sans-serif;color:var(--yellow);
+    font-size:clamp(14px,1.8vw,22px);text-align:center;letter-spacing:.05em;
+    margin:.4vh 0 .8vh;text-shadow:0 0 12px rgba(255,194,61,.4)}
   .tv-free{font-family:'Barlow Condensed',sans-serif;color:rgba(255,250,240,.4);
     text-transform:uppercase;letter-spacing:.12em;font-size:clamp(16px,2vw,26px);
     text-align:center;margin:auto}
@@ -320,9 +359,12 @@
   /* telas alternáveis e indicador */
   .tv-screen{flex:1;display:flex;flex-direction:column;min-height:0;animation:tvFade .5s ease}
   @keyframes tvFade{from{opacity:0}to{opacity:1}}
-  .tv-dots{display:flex;gap:10px;align-items:center}
-  .tv-dot{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.25);transition:.3s}
-  .tv-dot.on{background:var(--orange);transform:scale(1.3)}
+  .tv-modes{display:flex;gap:6px;align-items:center;background:rgba(255,255,255,.06);padding:4px;border-radius:30px;border:1px solid rgba(255,255,255,.12)}
+  .tv-mode-btn{font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;
+    font-size:clamp(11px,1.2vw,15px);letter-spacing:.06em;padding:6px 14px;border-radius:24px;
+    border:none;background:transparent;color:rgba(255,255,255,.6);cursor:pointer;transition:.2s}
+  .tv-mode-btn:hover{color:#fff}
+  .tv-mode-btn.on{background:var(--orange);color:#fff;box-shadow:0 0 12px rgba(255,94,26,.5)}
 
   /* chave do telão — cabe tudo na tela, sem rolagem.
      Dividida em faixas (vencedores / repescagem / final), cada faixa com colunas que
@@ -357,9 +399,79 @@
   @media (max-width:760px){
     .tv-courts{grid-template-columns:1fr;align-content:start;gap:2vh;overflow-y:auto}
   }
+
+  /* ============ TELA DE CAMPEÃO ÉPICA ============ */
+  .tv-champ-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    background:radial-gradient(circle at center, rgba(255,194,61,.18), transparent 60%);position:relative}
+  .tv-champ-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;
+    letter-spacing:.4em;font-size:clamp(16px,2.4vw,30px);color:var(--yellow);margin-bottom:2vh;
+    animation:champLabelPulse 2.5s ease-in-out infinite}
+  @keyframes champLabelPulse{0%,100%{opacity:.7;letter-spacing:.4em} 50%{opacity:1;letter-spacing:.5em}}
+  .tv-champ-trophy{font-size:clamp(70px,10vw,140px);line-height:1;margin-bottom:1vh;
+    animation:trophyBounce 1.8s ease-in-out infinite;filter:drop-shadow(0 0 30px rgba(255,194,61,.6))}
+  @keyframes trophyBounce{0%,100%{transform:translateY(0) rotate(-3deg)} 50%{transform:translateY(-12px) rotate(3deg)}}
+  .tv-champ-name{font-family:'Anton',sans-serif;font-size:clamp(40px,8vw,110px);color:#fff;
+    text-transform:uppercase;line-height:1;text-shadow:0 0 40px rgba(255,194,61,.7);margin:1vh 0 2vh;
+    animation:champNameGlow 3s ease-in-out infinite;padding:0 4vw;word-wrap:break-word}
+  @keyframes champNameGlow{0%,100%{text-shadow:0 0 40px rgba(255,194,61,.7),0 0 70px rgba(255,94,26,.5)}
+    50%{text-shadow:0 0 60px rgba(255,194,61,1),0 0 100px rgba(255,94,26,.8)}}
+  .tv-champ-sub{font-family:'Barlow Condensed',sans-serif;font-weight:600;color:rgba(255,250,240,.7);
+    text-transform:uppercase;letter-spacing:.18em;font-size:clamp(14px,1.8vw,22px);margin-top:2vh}
+
+  /* PÓDIO */
+  .tv-podium{display:flex;align-items:flex-end;justify-content:center;gap:3vw;margin-top:3vh;padding:0 4vw;max-width:100%}
+  .tv-podium-pos{display:flex;flex-direction:column;align-items:center;flex:1;max-width:30%}
+  .tv-podium-medal{font-size:clamp(34px,5vw,60px);margin-bottom:1vh;animation:medalShine 2s ease-in-out infinite}
+  @keyframes medalShine{0%,100%{transform:rotate(-8deg) scale(1)} 50%{transform:rotate(8deg) scale(1.08)}}
+  .tv-podium-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;color:#fff;
+    font-size:clamp(13px,1.5vw,20px);line-height:1.15;margin-bottom:1vh;text-align:center;
+    min-height:3em;display:flex;align-items:center;word-break:break-word}
+  .tv-podium-block{width:100%;background:linear-gradient(180deg,rgba(255,250,240,.15),rgba(255,250,240,.05));
+    border:2px solid rgba(255,255,255,.2);border-top:3px solid var(--yellow);
+    border-radius:8px 8px 0 0;display:flex;align-items:flex-start;justify-content:center;
+    padding-top:1.5vh;font-family:'Anton',sans-serif;font-size:clamp(28px,4vw,56px);color:var(--yellow)}
+  .tv-podium-pos.p1 .tv-podium-block{height:18vh;border-top-color:var(--yellow);background:linear-gradient(180deg,rgba(255,194,61,.35),rgba(255,194,61,.1))}
+  .tv-podium-pos.p2 .tv-podium-block{height:13vh;border-top-color:#C0C0C0}
+  .tv-podium-pos.p3 .tv-podium-block{height:9vh;border-top-color:#CD7F32}
+
+  /* ============ FLASH DE RESULTADO no telão ============ */
+  .tv-flash{position:fixed;inset:0;z-index:92;pointer-events:none;background:rgba(124,255,155,0);
+    display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .25s}
+  .tv-flash.show{opacity:1;animation:flashPulse 1.8s ease forwards}
+  @keyframes flashPulse{
+    0%{background:rgba(124,255,155,.35);opacity:1}
+    50%{background:rgba(124,255,155,.12);opacity:1}
+    100%{background:rgba(124,255,155,0);opacity:0}
+  }
+  .tv-flash-card{background:rgba(20,16,10,.92);border:3px solid var(--yellow);border-radius:14px;
+    padding:3vh 4vw;text-align:center;box-shadow:0 0 60px rgba(255,194,61,.5);transform:scale(.8);
+    animation:flashCardIn .5s ease forwards}
+  @keyframes flashCardIn{to{transform:scale(1)}}
+  .tv-flash-tag{font-family:'Barlow Condensed',sans-serif;font-weight:700;color:#7CFF9B;
+    text-transform:uppercase;letter-spacing:.2em;font-size:clamp(12px,1.6vw,18px);margin-bottom:1vh}
+  .tv-flash-name{font-family:'Anton',sans-serif;color:#fff;font-size:clamp(28px,4.5vw,56px);
+    text-transform:uppercase;line-height:1;margin-bottom:.8vh}
+  .tv-flash-score{font-family:'Anton',sans-serif;color:var(--yellow);font-size:clamp(22px,3vw,38px)}
+
+  /* ============ QR CODE no telão ============ */
+  .tv-qr{position:absolute;bottom:3vh;right:3vw;background:#fff;padding:8px;border-radius:8px;
+    display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:0 4px 20px rgba(0,0,0,.4);
+    max-width:14vw}
+  .tv-qr canvas, .tv-qr img{display:block;width:clamp(80px,9vw,140px);height:auto;background:#fff}
+  .tv-qr-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:clamp(8px,.85vw,12px);
+    color:var(--ink);text-transform:uppercase;letter-spacing:.05em;text-align:center;line-height:1.1}
+
+  /* ============ BOTÃO SOM ============ */
+  .sound-btn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;
+    text-transform:uppercase;letter-spacing:.06em;cursor:pointer;padding:8px 16px;
+    border:2px solid var(--ink);background:var(--paper);color:var(--ink);border-radius:30px;
+    box-shadow:2px 2px 0 var(--ink)}
+  .sound-btn.on{background:var(--green);color:#fff;border-color:#15643a;box-shadow:2px 2px 0 #15643a}
+
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -376,6 +488,7 @@
       <input class="sync-room" id="roomInput" placeholder="código da sala (ex: futevolei2026)" maxlength="40">
       <button class="mini-btn" id="syncConnectBtn" style="padding:7px 14px">Conectar</button>
       <button class="mini-btn" id="syncDisconnectBtn" style="padding:7px 14px;display:none;background:#f3ecd9;color:var(--lose);border-color:var(--lose);box-shadow:2px 2px 0 var(--lose)">Desconectar</button>
+      <button class="sound-btn" id="soundBtn">🔇 Ativar som</button>
       <label class="sync-mode" title="No telão, deixe marcado para evitar cliques acidentais">
         <input type="checkbox" id="readOnlyChk"> Só exibição
       </label>
@@ -385,6 +498,7 @@
   <div class="tabs">
     <button class="tab active" data-view="control">🎮 Quadras</button>
     <button class="tab" data-view="queue">⏭️ Fila</button>
+    <button class="tab" data-view="bracket">🌳 Chave</button>
     <button class="tab" data-view="results">✅ Resultados</button>
     <button class="tab" data-view="stand">🏆 Situação</button>
     <button class="tab" data-view="draw">🎲 Sorteio</button>
@@ -406,6 +520,13 @@
     <div class="panel-title"><span class="dot"></span>Fila completa de jogos</div>
     <p class="panel-note">Ordem geral das 27 partidas possíveis. Verde = pronta · Laranja = em quadra · Bege = aguardando definição das duplas.</p>
     <div id="queueList"></div>
+  </section>
+
+  <!-- CHAVE COMPLETA -->
+  <section class="view" id="bracket">
+    <div class="panel-title"><span class="dot"></span>Chave do torneio</div>
+    <p class="panel-note">Visão geral do chaveamento. ✅ Verde = vencedor da partida · 🔥 Laranja = partida em andamento · cinza = aguardando definição.</p>
+    <div id="bracketView" class="bracket-view"></div>
   </section>
 
   <!-- RESULTS -->
@@ -468,9 +589,10 @@
 <div class="tv-overlay" id="tvOverlay">
   <div class="tv-head">
     <div class="tv-title" id="tvTitle">🏐 Torneio de <span class="ball">Futevôlei</span></div>
-    <div class="tv-dots">
-      <span class="tv-dot" data-screen="0"></span>
-      <span class="tv-dot" data-screen="1"></span>
+    <div class="tv-modes" id="tvModes">
+      <button class="tv-mode-btn on" data-mode="auto">Auto</button>
+      <button class="tv-mode-btn" data-mode="courts">Quadras</button>
+      <button class="tv-mode-btn" data-mode="bracket">Chave</button>
     </div>
     <div style="display:flex;gap:8px">
       <button class="tv-close" id="tvFullBtn">⛶ Tela cheia</button>
@@ -487,6 +609,30 @@
   <!-- TELA B: chave completa -->
   <div class="tv-screen" id="tvScreenBracket" style="display:none">
     <div class="tv-bracket-scroll" id="tvBracket"></div>
+  </div>
+
+  <!-- TELA C: tela do CAMPEÃO (aparece automaticamente quando sair o campeão) -->
+  <div class="tv-screen tv-champ-screen" id="tvScreenChamp" style="display:none">
+    <div class="tv-champ-label">🏆 Campeão do Torneio</div>
+    <div class="tv-champ-trophy">🏆</div>
+    <div class="tv-champ-name" id="tvChampName">—</div>
+    <div class="tv-champ-sub" id="tvChampSub"></div>
+    <div class="tv-podium" id="tvPodium"></div>
+  </div>
+
+  <!-- QR CODE persistente no canto -->
+  <div class="tv-qr" id="tvQR" style="display:none">
+    <div id="tvQrImg"></div>
+    <div class="tv-qr-label">Acompanhe<br>no celular</div>
+  </div>
+</div>
+
+<!-- FLASH de resultado registrado (sobreposto ao telão) -->
+<div class="tv-flash" id="tvFlash">
+  <div class="tv-flash-card">
+    <div class="tv-flash-tag">✅ Resultado</div>
+    <div class="tv-flash-name" id="tvFlashName">—</div>
+    <div class="tv-flash-score" id="tvFlashScore"></div>
   </div>
 </div>
 
@@ -704,18 +850,22 @@ function connectRoom(room, readOnly){
   }).catch(e=>{ console.warn(e); setSyncStatus('err','Falha ao conectar'); });
 
   // escuta mudanças em tempo real
+  let _firstSnap = true;  // ignora drawEvent na primeira leitura (não é sorteio novo, é a sala atual)
   fbRoomRef.on('value', snap=>{
     const remote=snap.val();
-    if(!remote) return;
+    if(!remote){ _firstSnap=false; return; }
     // evento de sorteio: se for novo, roda a animação da roleta (inclusive no telão)
     if(remote.drawEvent && remote.drawEvent.id && remote.drawEvent.id!==_lastDrawEventId){
       _lastDrawEventId = remote.drawEvent.id;
-      const seeds = remote.drawEvent.seeds||[];
-      if(remote.drawEvent.origin !== _myClientId){
-        runDrawAnimation(seeds, ()=>{
-          // ao terminar a animação no telão, entra automaticamente no modo telão
-          if(SYNC.readOnly) autoEnterTV();
-        });
+      // se é o primeiro snapshot (estado já existia na sala antes de eu conectar), NÃO animar
+      if(!_firstSnap){
+        const seeds = remote.drawEvent.seeds||[];
+        if(remote.drawEvent.origin !== _myClientId){
+          runDrawAnimation(seeds, ()=>{
+            // ao terminar a animação no telão, entra automaticamente no modo telão
+            if(SYNC.readOnly) autoEnterTV();
+          });
+        }
       }
     }
     if(remote.state){
@@ -724,6 +874,7 @@ function connectRoom(room, readOnly){
       const isEchoOfMine = meta && meta.writerId===_myClientId && meta.writeAt<=_lastWriteAt;
       if(!isEchoOfMine) applyRemoteState(remote.state);
     }
+    _firstSnap = false;
   }, err=>{ console.warn('listener err',err); setSyncStatus('err','Conexão perdida'); SYNC.connected=false; });
 }
 const _myClientId = 'c'+Math.random().toString(36).slice(2,9);
@@ -732,12 +883,21 @@ function applyRemoteState(rs){
   // evita loop: marca que estamos aplicando algo vindo do servidor
   fbApplyingRemote=true;
   try{
+    // detecta resultado NOVO (pra disparar flash + som no telão)
+    const prevLastAt = state.lastResultAt || 0;
+    const newLastAt = (rs && rs.lastResultAt) || 0;
+    const newResult = newLastAt > prevLastAt ? rs.lastResultId : null;
+
     // se o usuário está digitando num input de placar, adia a re-renderização
     const af=document.activeElement;
-    const typingScore = af && /^(sa_|sb_|editScore|tournamentNameInput|newDupla|roomInput)/.test(af.id||'');
+    const typingScore = af && /^(sa_|sb_)/.test(af.id||'');
+    const typingOther = af && /^(editScore|tournamentNameInput|newDupla|roomInput|dupla-)/.test(af.id||'');
     const focusId=af && af.id ? af.id : null;
     const selStart=af && af.selectionStart!=null?af.selectionStart:null;
     const selEnd=af && af.selectionEnd!=null?af.selectionEnd:null;
+
+    // preserva meus liveScores locais se estou digitando um placar agora
+    const myLive = typingScore ? JSON.parse(JSON.stringify(state.liveScores||{})) : null;
 
     state = Object.assign(state, rs);
     if(!Array.isArray(state.courts)||state.courts.length!==NUM_COURTS) state.courts=[null,null,null];
@@ -745,18 +905,24 @@ function applyRemoteState(rs){
     if(!Array.isArray(state.byeChoices)) state.byeChoices=[];
     if(!Array.isArray(state.topChoices)) state.topChoices=[];
     if(!state.liveScores||typeof state.liveScores!=='object') state.liveScores={};
+    if(myLive) state.liveScores = myLive;   // mantém o que estou digitando
+
     applySeeds();
     saveLocal();
-    if(typingScore){
-      // re-renderiza só as partes que NÃO contém o input focado
+    if(typingScore || typingOther){
       renderTV(); renderNextPreview(); renderQueue(); renderResults(); renderStandings(); renderProgress();
-      if(typeof updateTournamentNameUI==='function') updateTournamentNameUI();
+      if(typeof updateTournamentNameUI==='function' && !typingOther) updateTournamentNameUI();
     } else {
       render();
     }
-    if(focusId){
+    if(focusId && !typingScore && !typingOther){
       const el=document.getElementById(focusId);
       if(el && el!==document.activeElement){ el.focus(); try{ el.setSelectionRange(selStart,selEnd); }catch(e){} }
+    }
+    // dispara flash + som no telão se chegou um resultado novo (e este aparelho é o telão)
+    if(newResult && state.results && state.results[newResult]){
+      triggerResultFlash(newResult);
+      playSound('whistle');
     }
   }finally{ fbApplyingRemote=false; }
 }
@@ -841,7 +1007,7 @@ function load(){
 }
 function saveLocal(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
 function pickPersisted(s){
-  return {results:s.results,courts:s.courts,gf2needed:s.gf2needed,duplas:s.duplas,seeds:s.seeds,drawn:s.drawn,byeChoices:s.byeChoices,topChoices:s.topChoices,courtStart:s.courtStart,liveScores:s.liveScores,tournamentName:s.tournamentName};
+  return {results:s.results,courts:s.courts,gf2needed:s.gf2needed,duplas:s.duplas,seeds:s.seeds,drawn:s.drawn,byeChoices:s.byeChoices,topChoices:s.topChoices,courtStart:s.courtStart,liveScores:s.liveScores,tournamentName:s.tournamentName,lastResultId:s.lastResultId,lastResultAt:s.lastResultAt};
 }
 function save(){
   saveLocal();
@@ -934,8 +1100,28 @@ function submitResult(matchId, aScore, bScore){
   assignCourts();
   save();
   render();
+  // marcar para o telão exibir um flash deste resultado
+  state.lastResultId = matchId;
+  state.lastResultAt = Date.now();
+  saveLocal();
+  triggerResultFlash(matchId);
+  playSound('whistle');
   toast(`✅ ${matchId} registrado · vencedor: ${winnerName(matchId)}`);
   return true;
+}
+function triggerResultFlash(matchId){
+  const m=MATCH_BY_ID[matchId]; const r=state.results[matchId]; if(!m||!r) return;
+  // só faz sentido se o telão está aberto neste aparelho
+  const ov=document.getElementById('tvOverlay');
+  if(!ov || !ov.classList.contains('show')) return;
+  const winnerNm=winnerName(matchId);
+  const score=Math.max(r.aScore,r.bScore)+' × '+Math.min(r.aScore,r.bScore);
+  document.getElementById('tvFlashName').textContent = winnerNm.toUpperCase();
+  document.getElementById('tvFlashScore').textContent = score+' · '+(m.id==='GF'?'GRANDE FINAL':m.id);
+  const flash=document.getElementById('tvFlash');
+  flash.classList.remove('show'); void flash.offsetWidth; // reinicia animação
+  flash.classList.add('show');
+  setTimeout(()=>flash.classList.remove('show'), 1800);
 }
 function winnerName(matchId){
   const r = state.results[matchId]; if(!r) return '';
@@ -1207,6 +1393,7 @@ function render(){
   renderResults();
   renderStandings();
   renderDrawSeeds();
+  renderBracketView();
   renderProgress();
   renderTV();
   tickTimers();
@@ -1217,7 +1404,17 @@ function render(){
 let _lastChamp=null;
 function checkChampionCelebration(){
   const c=getChampion();
-  if(c && c!==_lastChamp){ _lastChamp=c; fireConfetti(4000); }
+  if(c && c!==_lastChamp){
+    _lastChamp=c;
+    fireConfetti(5000);
+    playSound('fanfare');
+    // se o telão está aberto E estamos em modo auto, pula direto pra tela do campeão
+    const ov=document.getElementById('tvOverlay');
+    if(ov && ov.classList.contains('show') && tvMode==='auto'){
+      tvScreen=2;
+      renderTV();
+    }
+  }
   if(!c) _lastChamp=null;
 }
 
@@ -1272,12 +1469,12 @@ function renderCourts(){
           <div class="phase-tag">${m.phase}</div>
           <div class="team-row">
             <span class="team-name">${A.name}</span>
-            <input class="score-input" type="number" inputmode="numeric" min="0" id="sa_${mid}" placeholder="0" value="${valA}" oninput="updateLive('${mid}')">
+            <input class="score-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" id="sa_${mid}" placeholder="0" value="${valA}" oninput="updateLive('${mid}')">
           </div>
           <div class="vs-mini">VS</div>
           <div class="team-row">
             <span class="team-name">${B.name}</span>
-            <input class="score-input" type="number" inputmode="numeric" min="0" id="sb_${mid}" placeholder="0" value="${valB}" oninput="updateLive('${mid}')">
+            <input class="score-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" id="sb_${mid}" placeholder="0" value="${valB}" oninput="updateLive('${mid}')">
           </div>
           <div class="live-hint">📺 O placar digitado aparece ao vivo no telão</div>
           ${startBtn}
@@ -1296,19 +1493,22 @@ window.confirmCourt = function(mid){
   submitResult(mid,a,b);
 };
 
+let _liveDebounce=null;
 window.updateLive = function(mid){
   const a = parseInt(document.getElementById('sa_'+mid).value,10);
   const b = parseInt(document.getElementById('sb_'+mid).value,10);
   if(!state.liveScores) state.liveScores={};
   if(isNaN(a) && isNaN(b)){ delete state.liveScores[mid]; }
   else state.liveScores[mid]={a:isNaN(a)?0:a, b:isNaN(b)?0:b};
-  save();           // sincroniza com o telão
-  renderTV();       // atualiza telão imediatamente se estiver aberto na mesma tela
+  // atualiza só o telão (outra tela, não rouba foco daqui) e persiste com atraso
+  renderTV();
+  clearTimeout(_liveDebounce);
+  _liveDebounce=setTimeout(()=>{ save(); }, 600);  // envia ao Firebase após pausa na digitação
 };
 window.startCourtTimer = function(mid){
   if(!state.courtStart) state.courtStart={};
   state.courtStart[mid]=Date.now();
-  save(); render(); toast('⏱ Cronômetro iniciado.');
+  save(); render(); playSound('tick'); toast('⏱ Cronômetro iniciado.');
 };
 window.resetCourtTimer = function(mid){
   askConfirm('Reiniciar o cronômetro desta partida do zero?',()=>{
@@ -1502,6 +1702,61 @@ document.getElementById('newDupla').addEventListener('keydown',e=>{
 });
 
 /* ============================================================
+   ÁUDIO — sons gerados via Web Audio API (sem arquivos externos)
+   ============================================================ */
+let _audioCtx=null, _soundOn=false;
+function initAudio(){
+  if(_audioCtx) return _audioCtx;
+  try{ _audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; }
+  return _audioCtx;
+}
+function _tone(freq, dur, type, vol, when, slide){
+  const ctx=_audioCtx; if(!ctx) return;
+  const t0=ctx.currentTime+(when||0);
+  const osc=ctx.createOscillator(), gain=ctx.createGain();
+  osc.type=type||'sine'; osc.frequency.setValueAtTime(freq,t0);
+  if(slide) osc.frequency.exponentialRampToValueAtTime(Math.max(60,freq*slide), t0+dur);
+  gain.gain.setValueAtTime(0.0001,t0);
+  gain.gain.exponentialRampToValueAtTime(vol||0.25, t0+0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(t0); osc.stop(t0+dur+0.05);
+}
+function playSound(kind){
+  if(!_soundOn||!_audioCtx) return;
+  switch(kind){
+    case 'whistle': // apito ao registrar resultado
+      _tone(1400, 0.18, 'square', 0.18, 0);
+      _tone(1100, 0.12, 'square', 0.16, 0.18); break;
+    case 'fanfare': // campeão!
+      [0,0.18,0.36,0.54].forEach((d,i)=>_tone([523,659,784,1047][i],0.35,'triangle',0.22,d));
+      _tone(1568, 0.9, 'triangle', 0.25, 0.72); break;
+    case 'drumroll': // suspense no sorteio
+      for(let i=0;i<24;i++){
+        _tone(80+Math.random()*40, 0.05, 'sawtooth', 0.12, i*0.08);
+      } break;
+    case 'reveal': // ao revelar cada seed
+      _tone(660, 0.08, 'sine', 0.15, 0);
+      _tone(880, 0.1, 'sine', 0.15, 0.06); break;
+    case 'tick': // start cronômetro
+      _tone(800, 0.06, 'sine', 0.18, 0); break;
+  }
+}
+function enableSound(){
+  initAudio();
+  if(_audioCtx && _audioCtx.state==='suspended') _audioCtx.resume();
+  _soundOn=true;
+  const btn=document.getElementById('soundBtn');
+  if(btn){ btn.classList.add('on'); btn.textContent='🔊 Som ligado'; }
+  playSound('reveal'); // feedback de que ligou
+}
+function disableSound(){
+  _soundOn=false;
+  const btn=document.getElementById('soundBtn');
+  if(btn){ btn.classList.remove('on'); btn.textContent='🔇 Ativar som'; }
+}
+
+/* ============================================================
    CONFETE (canvas)
    ============================================================ */
 const confettiCanvas = document.getElementById('confetti');
@@ -1560,6 +1815,7 @@ function runDrawAnimation(seeds, onDone){
   seedNum.textContent = 'Preparando sorteio…';
   roller.textContent = '✨';
   roller.style.transform='scale(1.3)';
+  playSound('drumroll');
   const t1=setTimeout(()=>{
     roller.style.transform='scale(1)';
     roller.textContent = N+' duplas em disputa';
@@ -1577,6 +1833,7 @@ function runDrawAnimation(seeds, onDone){
       stageLbl.textContent='✅ Sorteio concluído!';
       seedNum.textContent=''; roller.textContent=tName?'🏆 '+tName:'🏆 Boa sorte!'; byeTag.classList.remove('show');
       fireConfetti(2500);
+      playSound('fanfare');
       const t=setTimeout(()=>{ ov.classList.remove('show'); onDone&&onDone(); }, 1800);
       drawAnimTimers.push(t);
       return;
@@ -1594,6 +1851,7 @@ function runDrawAnimation(seeds, onDone){
         const t=setTimeout(spin, 60+spins*8); drawAnimTimers.push(t);
       } else {
         roller.textContent=seeds[idx]; roller.style.transform='scale(1.08)';
+        playSound('reveal');
         if(isBye) byeTag.classList.add('show');
         const li=document.createElement('div');
         li.className='draw-locked-item'+(isBye?' bye':'');
@@ -1647,19 +1905,137 @@ setInterval(tickTimers, 1000);
 /* ============================================================
    MODO TV / TELÃO — alterna entre [quadras+próximos] e [chave]
    ============================================================ */
-let tvScreen=0;          // 0 = quadras, 1 = chave
+let tvScreen=0;          // 0 = quadras, 1 = chave, 2 = campeão
+let tvMode='auto';       // 'auto' (rotaciona), 'courts' (trava quadras), 'bracket' (trava chave)
 let tvRotateTimer=null;
+
+function setTvMode(mode){
+  tvMode = mode;
+  // atualiza visual dos botões
+  document.querySelectorAll('.tv-mode-btn').forEach(b=>b.classList.toggle('on', b.dataset.mode===mode));
+  // ao travar, vai pra tela escolhida; ao voltar pra auto, deixa rotação cuidar
+  if(mode==='courts') tvScreen=0;
+  else if(mode==='bracket') tvScreen=1;
+  renderTV();
+  // reinicia o cronômetro de rotação (no auto ele anda; nos outros, fica parado)
+  if(document.getElementById('tvOverlay').classList.contains('show')){
+    startTvRotate();
+  }
+}
 
 function renderTV(){
   const ov=document.getElementById('tvOverlay');
   if(!ov.classList.contains('show')) return;
+  const champ=getChampion();
   // mostra a tela ativa
   document.getElementById('tvScreenCourts').style.display = tvScreen===0?'flex':'none';
   document.getElementById('tvScreenBracket').style.display = tvScreen===1?'flex':'none';
-  document.querySelectorAll('.tv-dot').forEach(d=>d.classList.toggle('on', +d.dataset.screen===tvScreen));
+  document.getElementById('tvScreenChamp').style.display   = tvScreen===2?'flex':'none';
   if(tvScreen===0) renderTVCourts();
-  else renderTVBracket();
+  else if(tvScreen===1) renderTVBracket();
+  else renderTVChamp();
+  // QR code visível enquanto telão estiver aberto
+  ensureQR();
 }
+
+function renderTVChamp(){
+  const champ=getChampion();
+  const nameEl=document.getElementById('tvChampName');
+  const subEl=document.getElementById('tvChampSub');
+  const tName=(state.tournamentName||'').trim();
+  if(!champ){
+    nameEl.textContent='Aguardando o campeão…';
+    subEl.textContent = tName || '';
+    document.getElementById('tvPodium').innerHTML='';
+    return;
+  }
+  nameEl.textContent = champ.toUpperCase();
+  subEl.textContent = tName ? '🏆 '+tName : 'Parabéns aos campeões!';
+  // calcula pódio
+  const podium = computePodium();
+  const podHTML = `
+    <div class="tv-podium-pos p2">
+      <div class="tv-podium-medal">🥈</div>
+      <div class="tv-podium-name">${podium.second||'—'}</div>
+      <div class="tv-podium-block">2º</div>
+    </div>
+    <div class="tv-podium-pos p1">
+      <div class="tv-podium-medal">🥇</div>
+      <div class="tv-podium-name">${podium.first||'—'}</div>
+      <div class="tv-podium-block">1º</div>
+    </div>
+    <div class="tv-podium-pos p3">
+      <div class="tv-podium-medal">🥉</div>
+      <div class="tv-podium-name">${podium.third||'—'}</div>
+      <div class="tv-podium-block">3º</div>
+    </div>`;
+  document.getElementById('tvPodium').innerHTML = podHTML;
+}
+
+function computePodium(){
+  const champ=getChampion();
+  if(!champ) return {first:null,second:null,third:null};
+  // 2º: perdedor da última final jogada (GF2 se existiu, senão GF)
+  let secondId = state.results.GF2 ? 'GF2' : (state.results.GF ? 'GF' : null);
+  const second = secondId ? loserName(secondId) : null;
+  // 3º: perdedor da última partida da repescagem (Lk com maior número que foi jogada e cujo vencedor foi à GF)
+  // heurística: é a partida da LB com depth máxima que tem resultado
+  let third = null;
+  const lbWithResult = MATCH_DEFS.filter(m=>m.bracket==='LB' && state.results[m.id]);
+  if(lbWithResult.length){
+    lbWithResult.sort((a,b)=>(b.depth||0)-(a.depth||0) || (b.order||0)-(a.order||0));
+    third = loserName(lbWithResult[0].id);
+  }
+  return {first:champ, second, third};
+}
+
+/* === QR CODE === */
+let _qrInstance=null, _qrLastUrl='';
+function buildQrUrl(){
+  // monta a URL atual com a sala e modo só-exibição
+  try{
+    const base = location.origin + location.pathname;
+    const params = [];
+    if(SYNC.room) params.push('sala='+encodeURIComponent(SYNC.room));
+    params.push('exibir=1');
+    return base + (params.length?('?'+params.join('&')):'') + '#tv';
+  }catch(e){ return location.href; }
+}
+function ensureQR(){
+  // só faz sentido mostrar o QR quando conectado a uma sala (pra galera abrir sincronizado)
+  const wrap = document.getElementById('tvQR');
+  if(!wrap) return;
+  if(!SYNC.connected || !SYNC.room){ wrap.style.display='none'; return; }
+  wrap.style.display='flex';
+  const url = buildQrUrl();
+  if(url===_qrLastUrl && _qrInstance) return; // já está pronto
+  _qrLastUrl = url;
+  const slot = document.getElementById('tvQrImg');
+  slot.innerHTML='';
+  if(typeof QRCode==='undefined'){
+    // fallback: serviço de QR via imagem (caso a lib não tenha carregado)
+    slot.innerHTML = `<img alt="QR" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}">`;
+    return;
+  }
+  _qrInstance = new QRCode(slot, { text:url, width:160, height:160, correctLevel:QRCode.CorrectLevel.M });
+}
+
+function startTvRotate(){
+  stopTvRotate();
+  if(tvMode!=='auto') return;  // travado: não rotaciona
+  tvRotateTimer=setInterval(()=>{
+    const champ=getChampion();
+    if(champ){
+      // com campeão: roda entre Quadras (0), Chave (1) e Campeão (2)
+      tvScreen = (tvScreen+1)%3;
+    } else {
+      // sem campeão: só alterna entre Quadras (0) e Chave (1)
+      tvScreen = tvScreen===0?1:0;
+    }
+    renderTV();
+  }, 15000); // alterna a cada 15s
+}
+function stopTvRotate(){ if(tvRotateTimer){ clearInterval(tvRotateTimer); tvRotateTimer=null; } }
 
 function renderTVCourts(){
   const wrap=document.getElementById('tvCourts');
@@ -1677,6 +2053,7 @@ function renderTVCourts(){
       const scoreB = live ? `<span class="tv-score">${live.b}</span>` : '';
       html+=`<div class="tv-court${waiting?' waiting':''}">
         <div class="tv-court-num"><span>Quadra ${i+1}</span><span class="tmr" id="tvtimer_${i}">${waiting?'aguardando':''}</span></div>
+        <div class="tv-game-code">Jogo ${m.id}</div>
         ${waiting?'<div class="tv-call">▶ Chamar duplas</div>':''}
         <div class="tv-team-line"><span class="tv-team">${A.name}</span>${scoreA}</div>
         <div class="tv-vs">VS</div>
@@ -1698,6 +2075,54 @@ function renderTVCourts(){
 
 /* chave completa no telão, em FAIXAS (Vencedores / Repescagem / Final),
    cada faixa com colunas de fase que se ajustam à largura — cabe tudo sem rolar */
+function renderBracketView(){
+  const wrap=document.getElementById('bracketView');
+  if(!wrap) return;
+  if(!MATCH_DEFS.length){
+    wrap.innerHTML='<p style="text-align:center;padding:24px;color:#7a6840">Sorteie as duplas pra ver a chave.</p>';
+    return;
+  }
+  const onCourt=new Set(state.courts.filter(Boolean));
+  const groups=[]; const idx={};
+  MATCH_DEFS.forEach(m=>{
+    if(m.id==='GF2' && !gf2Active()) return;
+    const key=m.bracket+'|'+m.phase;
+    if(!(key in idx)){ idx[key]=groups.length; groups.push({bracket:m.bracket, phase:m.phase, matches:[]}); }
+    groups[idx[key]].matches.push(m);
+  });
+  const shortName=(s)=> s.replace(/^Vencedor\s+/,'Vc ').replace(/^Perdedor\s+/,'Pd ');
+  const matchHTML=(m)=>{
+    const A=resolveRef(m.a),B=resolveRef(m.b);
+    const done=matchDone(m.id);
+    const live=onCourt.has(m.id);
+    const r=done?state.results[m.id]:null;
+    const aWin=done&&r.winnerSide==='a', bWin=done&&r.winnerSide==='b';
+    const row=(ref,resolved,isWin,isOut)=>{
+      const cls=resolved.ready?(isWin?'win':(isOut?'out':'')):'feeder';
+      const sc=done?`<span class="bv-sc">${ref==='a'?r.aScore:r.bScore}</span>`:'';
+      const nm=resolved.ready?resolved.name:shortName(resolved.name);
+      return `<div class="bv-team ${cls}"><span>${nm}</span>${sc}</div>`;
+    };
+    return `<div class="bv-match ${live?'live':''}" data-mid="${m.id}">${live?'<div class="bv-live-tag">● EM QUADRA</div>':''}<div class="bv-code">${m.id==='GF'?'GRANDE FINAL':m.id==='GF2'?'FINAL RESET':m.id}</div>${row('a',A,aWin,bWin)}${row('b',B,bWin,aWin)}</div>`;
+  };
+  const bandHTML=(title, cls, grps)=>{
+    if(!grps.length) return '';
+    let cols='';
+    grps.forEach(g=>{
+      const colCls=g.bracket==='GF'?'gf':cls;
+      const short=g.phase.replace('Vencedores · ','').replace('Repescagem · ','').replace('Rodada','R').replace('(Vencedores)','');
+      cols+=`<div class="bv-col"><div class="bv-col-lbl ${colCls}">${short}</div>${g.matches.map(matchHTML).join('')}</div>`;
+    });
+    return `<div class="bv-band"><div class="bv-band-title"><span class="bv-pill ${cls}"></span>${title}</div><div class="bv-band-cols">${cols}</div></div>`;
+  };
+  const wb=groups.filter(g=>g.bracket==='WB');
+  const lb=groups.filter(g=>g.bracket==='LB');
+  const gf=groups.filter(g=>g.bracket==='GF');
+  wrap.innerHTML =
+    bandHTML('Chave de Vencedores'+(gf.length?' + Final':''), 'wb', wb.concat(gf.map(g=>({...g,bracket:'GF'})))) +
+    bandHTML('Repescagem', 'lb', lb);
+}
+
 function renderTVBracket(){
   const wrap=document.getElementById('tvBracket');
   if(!MATCH_DEFS.length){ wrap.innerHTML='<div class="tv-free" style="margin:auto">Aguardando sorteio…</div>'; return; }
@@ -1750,18 +2175,12 @@ function renderTVBracket(){
   // ajusta a cor do rótulo da final (fica como wb na faixa, então marcamos a coluna GF)
 }
 
-function startTvRotate(){
-  stopTvRotate();
-  tvRotateTimer=setInterval(()=>{
-    tvScreen = tvScreen===0?1:0;
-    renderTV();
-  }, 15000); // alterna a cada 15s
-}
-function stopTvRotate(){ if(tvRotateTimer){ clearInterval(tvRotateTimer); tvRotateTimer=null; } }
-
 function openTV(){
   if(!state.drawn){ toast('Sorteie as duplas primeiro.'); return; }
-  tvScreen=0;
+  // respeita o modo travado; em auto, abre nas quadras (ou tela do campeão se já houver)
+  if(tvMode==='courts') tvScreen=0;
+  else if(tvMode==='bracket') tvScreen=1;
+  else tvScreen = getChampion() ? 2 : 0;
   document.getElementById('tvOverlay').classList.add('show');
   document.documentElement.classList.add('tv-open');
   document.body.classList.add('tv-open');
@@ -1775,6 +2194,10 @@ function autoEnterTV(){
   if(state.drawn) openTV();
 }
 document.getElementById('tvBtn').addEventListener('click', openTV);
+document.getElementById('tvModes').addEventListener('click', e=>{
+  const b=e.target.closest('.tv-mode-btn'); if(!b) return;
+  setTvMode(b.dataset.mode);
+});
 document.getElementById('tvClose').addEventListener('click',()=>{
   document.getElementById('tvOverlay').classList.remove('show');
   document.documentElement.classList.remove('tv-open');
@@ -1911,6 +2334,11 @@ function updateTournamentNameUI(){
   if(inp && inp.value!==n) inp.value=n;
 }
 
+// Botão de ativar/desativar som
+document.getElementById('soundBtn').addEventListener('click',()=>{
+  if(_soundOn) disableSound(); else enableSound();
+});
+
 /* ============================================================
    INIT
    ============================================================ */
@@ -1922,8 +2350,25 @@ updateTournamentNameUI();
 render();
 // (não força mais a aba de sorteio ao entrar — entra na aba "Quadras")
 
-// reconecta à última sala usada (se houver)
+// reconecta à última sala usada (se houver) — ou usa parâmetros da URL (QR code)
 (function reconnectSync(){
+  // 1) parâmetros da URL têm prioridade (vindos do QR code: ?sala=xxx&exibir=1#tv)
+  const url=new URL(location.href);
+  const urlSala=url.searchParams.get('sala');
+  const urlExibir=url.searchParams.get('exibir')==='1';
+  const wantTV = location.hash==='#tv';
+  if(urlSala){
+    document.getElementById('roomInput').value=urlSala;
+    document.getElementById('readOnlyChk').checked=urlExibir;
+    initFirebase();
+    connectRoom(urlSala, urlExibir);
+    if(wantTV){
+      // espera um pouco até o estado chegar, aí abre o telão
+      setTimeout(()=>{ if(state.drawn) openTV(); }, 1500);
+    }
+    return;
+  }
+  // 2) sem URL: reconecta à última sala usada
   const prefs=loadSyncPrefs();
   if(prefs && prefs.room){
     document.getElementById('roomInput').value=prefs.room;
