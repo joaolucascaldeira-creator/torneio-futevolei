@@ -48,8 +48,6 @@
   .sync-status.on{background:#d6efe4;color:var(--teal-deep);border-color:var(--teal)}
   .sync-status.off{background:#f3ecd9;color:#9c7d44}
   .sync-status.err{background:#fbe2cf;color:var(--lose);border-color:var(--lose)}
-  .sync-status.blink{animation:syncBlink .35s ease}
-  @keyframes syncBlink{0%{box-shadow:0 0 0 0 rgba(28,138,79,.6)} 50%{box-shadow:0 0 0 8px rgba(28,138,79,0)} 100%{box-shadow:0 0 0 0 rgba(28,138,79,0)}}
   .sync-room{height:36px;padding:0 12px;font-family:'Barlow',sans-serif;font-size:14px;font-weight:500;
     border:2px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink);max-width:240px}
   .sync-room:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,94,26,.22)}
@@ -490,7 +488,6 @@
       <input class="sync-room" id="roomInput" placeholder="código da sala (ex: futevolei2026)" maxlength="40">
       <button class="mini-btn" id="syncConnectBtn" style="padding:7px 14px">Conectar</button>
       <button class="mini-btn" id="syncDisconnectBtn" style="padding:7px 14px;display:none;background:#f3ecd9;color:var(--lose);border-color:var(--lose);box-shadow:2px 2px 0 var(--lose)">Desconectar</button>
-      <button class="mini-btn" id="syncForceBtn" style="padding:7px 14px;display:none" title="Puxa o estado atual da sala">🔄 Sincronizar</button>
       <button class="sound-btn" id="soundBtn">🔇 Ativar som</button>
       <label class="sync-mode" title="No telão, deixe marcado para evitar cliques acidentais">
         <input type="checkbox" id="readOnlyChk"> Só exibição
@@ -820,14 +817,6 @@ function setSyncStatus(kind,msg){
   el.className='sync-status '+(kind==='on'?'on':kind==='err'?'err':'off');
   el.textContent=(kind==='on'?'🟢 ':kind==='err'?'🔴 ':'⚪ ')+msg;
 }
-let _lastSyncPingAt = 0;
-function pingSyncReceived(){
-  // pisca o status verde brevemente a cada atualização recebida do Firebase
-  _lastSyncPingAt = Date.now();
-  const el=document.getElementById('syncStatus'); if(!el) return;
-  el.classList.add('blink');
-  setTimeout(()=>{ if(el) el.classList.remove('blink'); }, 350);
-}
 function sanitizeRoom(r){ return (r||'').trim().toLowerCase().replace(/[^a-z0-9_-]/g,'').slice(0,40); }
 
 function connectRoom(room, readOnly){
@@ -857,7 +846,6 @@ function connectRoom(room, readOnly){
     setSyncStatus('on', (SYNC.readOnly?'Exibindo · ':'Controlando · ')+'sala "'+room+'"');
     document.getElementById('syncConnectBtn').style.display='none';
     document.getElementById('syncDisconnectBtn').style.display='';
-    document.getElementById('syncForceBtn').style.display='';
     saveSyncPrefs();
   }).catch(e=>{ console.warn(e); setSyncStatus('err','Falha ao conectar'); });
 
@@ -865,7 +853,6 @@ function connectRoom(room, readOnly){
   let _firstSnap = true;  // ignora drawEvent na primeira leitura (não é sorteio novo, é a sala atual)
   fbRoomRef.on('value', snap=>{
     const remote=snap.val();
-    pingSyncReceived();
     if(!remote){ _firstSnap=false; return; }
     // evento de sorteio: se for novo, roda a animação da roleta (inclusive no telão)
     if(remote.drawEvent && remote.drawEvent.id && remote.drawEvent.id!==_lastDrawEventId){
@@ -888,70 +875,7 @@ function connectRoom(room, readOnly){
       if(!isEchoOfMine) applyRemoteState(remote.state);
     }
     _firstSnap = false;
-  }, err=>{ console.warn('listener err',err); setSyncStatus('err','Conexão perdida'); SYNC.connected=false; scheduleReconnect(); });
-
-  // listener especial do Firebase: detecta quando a conexão cai/volta
-  startConnectionWatcher();
-}
-
-let _reconnectTimer=null;
-function scheduleReconnect(){
-  if(_reconnectTimer) return;
-  _reconnectTimer = setTimeout(()=>{
-    _reconnectTimer=null;
-    if(!SYNC.connected && SYNC.room){
-      console.log('Tentando reconectar à sala', SYNC.room);
-      connectRoom(SYNC.room, SYNC.readOnly);
-    }
-  }, 3000);
-}
-
-let _connWatcherStarted=false;
-function startConnectionWatcher(){
-  if(_connWatcherStarted) return;
-  if(typeof firebase==='undefined' || !firebase.database) return;
-  try{
-    const connRef = firebase.database().ref('.info/connected');
-    connRef.on('value', snap=>{
-      const isConn = !!snap.val();
-      if(isConn){
-        if(SYNC.room){
-          setSyncStatus('on', (SYNC.readOnly?'Exibindo · ':'Controlando · ')+'sala "'+SYNC.room+'"');
-          SYNC.connected=true;
-        }
-      } else {
-        if(SYNC.room){
-          setSyncStatus('err', 'Sem internet · tentando reconectar…');
-          SYNC.connected=false;
-          scheduleReconnect();
-        }
-      }
-    });
-    _connWatcherStarted=true;
-  }catch(e){ console.warn('connection watcher fail',e); }
-}
-
-// força uma sincronização manual (puxa o estado atual da sala)
-function forceSync(){
-  if(!SYNC.room){ toast('Nenhuma sala conectada.'); return; }
-  if(!fbRoomRef){ toast('Reconectando…'); connectRoom(SYNC.room, SYNC.readOnly); return; }
-  try{
-    fbRoomRef.once('value').then(snap=>{
-      const remote=snap.val();
-      if(remote && remote.state){
-        applyRemoteState(remote.state);
-        toast('🔄 Sincronizado com a sala.');
-      } else {
-        // sala vazia: publica o estado local (se puder)
-        if(!SYNC.readOnly){ pushToFirebase(); toast('🔄 Estado atual publicado na sala.'); }
-        else { toast('Sala vazia — aguardando dados do controle.'); }
-      }
-    }).catch(e=>{
-      console.warn('forceSync',e);
-      toast('Falha ao sincronizar. Reconectando…');
-      connectRoom(SYNC.room, SYNC.readOnly);
-    });
-  }catch(e){ toast('Erro ao sincronizar.'); }
+  }, err=>{ console.warn('listener err',err); setSyncStatus('err','Conexão perdida'); SYNC.connected=false; });
 }
 const _myClientId = 'c'+Math.random().toString(36).slice(2,9);
 let _lastDrawEventId = null;
@@ -1008,7 +932,6 @@ function disconnect(){
   setSyncStatus('off','Offline · sem sala');
   document.getElementById('syncDisconnectBtn').style.display='none';
   document.getElementById('syncConnectBtn').style.display='';
-  document.getElementById('syncForceBtn').style.display='none';
   saveSyncPrefs();
   toast('🔌 Desconectado da sala.');
 }
@@ -2079,11 +2002,9 @@ function buildQrUrl(){
   }catch(e){ return location.href; }
 }
 function ensureQR(){
+  // só faz sentido mostrar o QR quando conectado a uma sala (pra galera abrir sincronizado)
   const wrap = document.getElementById('tvQR');
   if(!wrap) return;
-  // esconde na tela da chave (onde ocuparia o espaço da Repescagem)
-  if(tvScreen===1){ wrap.style.display='none'; return; }
-  // só faz sentido mostrar o QR quando conectado a uma sala (pra galera abrir sincronizado)
   if(!SYNC.connected || !SYNC.room){ wrap.style.display='none'; return; }
   wrap.style.display='flex';
   const url = buildQrUrl();
@@ -2383,7 +2304,6 @@ document.getElementById('syncConnectBtn').addEventListener('click',()=>{
 document.getElementById('syncDisconnectBtn').addEventListener('click',()=>{
   askConfirm('Desconectar desta sala? Você pode reconectar depois.', disconnect);
 });
-document.getElementById('syncForceBtn').addEventListener('click', forceSync);
 document.getElementById('roomInput').addEventListener('keydown',e=>{
   if(e.key==='Enter'){ connectRoom(e.target.value, document.getElementById('readOnlyChk').checked); }
 });
